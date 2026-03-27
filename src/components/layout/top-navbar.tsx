@@ -6,11 +6,11 @@ import { usePathname } from 'next/navigation';
 export function TopNavbar() {
     const pathname = usePathname();
 
-    // Map pathname to title
     const getPageTitle = () => {
         if (pathname.includes('/records')) return 'My Records';
         if (pathname.includes('/appointments')) return 'Appointments';
         if (pathname.includes('/access')) return 'Access Control';
+        if (pathname.includes('/requests')) return 'Access Requests';
         // Add others as needed or return nothing for dashboard
         return '';
     };
