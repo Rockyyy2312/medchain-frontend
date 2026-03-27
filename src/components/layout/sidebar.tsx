@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import {
   LayoutDashboard,
@@ -30,6 +30,7 @@ const bottomItems = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
 
   return (
     <div className="w-64 bg-slate-50/20 border-r border-slate-100 h-full flex flex-col justify-between hidden md:flex">
@@ -84,7 +85,10 @@ export function Sidebar() {
               </Link>
             );
           })}
-          <button className="w-full flex items-center px-4 py-3 rounded-xl text-sm font-semibold text-slate-500 hover:bg-white hover:text-red-600 hover:shadow-sm active:scale-95 transition-all duration-200 group">
+          <button
+            onClick={() => router.push('/')}
+            className="w-full flex items-center px-4 py-3 rounded-xl text-sm font-semibold text-slate-500 hover:bg-white hover:text-red-600 hover:shadow-sm active:scale-95 transition-all duration-200 group"
+          >
             <LogOut className="mr-3 h-5 w-5 text-slate-400 group-hover:text-red-500 transition-colors" />
             Sign Out
           </button>
