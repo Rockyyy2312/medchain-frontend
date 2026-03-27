@@ -11,6 +11,7 @@ export function TopNavbar() {
         if (pathname.includes('/appointments')) return 'Appointments';
         if (pathname.includes('/access')) return 'Access Control';
         if (pathname.includes('/requests')) return 'Access Requests';
+        if (pathname.includes('/profile')) return 'Patient Profile';
         // Add others as needed or return nothing for dashboard
         return '';
     };
