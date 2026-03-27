@@ -1,3 +1,5 @@
+'use client';
+
 import {
     Search, Bell, Settings, User, BadgeCheck, FileText, Users, Activity,
     HeartPulse, Link2, ShieldAlert, ArrowUpRight, ArrowRight, ShieldCheck,
@@ -5,8 +7,10 @@ import {
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { useRouter } from "next/navigation"
 
 export default function PatientDashboard() {
+    const router = useRouter();
     return (
         <div className="min-h-full bg-slate-50/50 pb-16">
             <div className="flex-1 space-y-10 p-8 max-w-[1100px] animate-in fade-in duration-500 mt-2">
@@ -32,7 +36,7 @@ export default function PatientDashboard() {
                 {/* Action Cards (Row 1) */}
                 <div className="grid gap-6 md:grid-cols-2">
                     {/* Upload Card */}
-                    <Card className="relative overflow-hidden border border-slate-100 shadow-sm rounded-[2rem] bg-white group hover:shadow-md hover:-translate-y-1 transition-all cursor-pointer">
+                    <Card onClick={() => router.push('/records')} className="relative overflow-hidden border border-slate-100 shadow-sm rounded-[2rem] bg-white group hover:shadow-md hover:-translate-y-1 transition-all cursor-pointer">
                         <div className="absolute right-[-10%] top-[-10%] opacity-[0.03] pointer-events-none group-hover:scale-110 transition-transform duration-500">
                             <HardDriveUpload className="w-[300px] h-[300px] text-blue-600" />
                         </div>
@@ -55,7 +59,7 @@ export default function PatientDashboard() {
                     </Card>
 
                     {/* Book Appointment Card */}
-                    <Card className="relative overflow-hidden border border-slate-100 shadow-sm rounded-[2rem] bg-white group hover:shadow-md hover:-translate-y-1 transition-all cursor-pointer">
+                    <Card onClick={() => router.push('/appointments')} className="relative overflow-hidden border border-slate-100 shadow-sm rounded-[2rem] bg-white group hover:shadow-md hover:-translate-y-1 transition-all cursor-pointer">
                         <div className="absolute right-[-10%] top-[-10%] opacity-[0.03] pointer-events-none group-hover:scale-110 transition-transform duration-500">
                             <CalendarDays className="w-[300px] h-[300px] text-blue-600" />
                         </div>
@@ -80,7 +84,7 @@ export default function PatientDashboard() {
 
                 {/* Stats Row (Row 2) */}
                 <div className="grid gap-6 md:grid-cols-3">
-                    <Card className="border-0 shadow-sm rounded-[1.5rem] bg-slate-50 hover:bg-slate-100 hover:shadow-md hover:-translate-y-1 transition-all cursor-pointer flex items-center group">
+                    <Card onClick={() => router.push('/records')} className="border-0 shadow-sm rounded-[1.5rem] bg-slate-50 hover:bg-slate-100 hover:shadow-md hover:-translate-y-1 transition-all cursor-pointer flex items-center group">
                         <CardContent className="p-6 flex items-center justify-center gap-5 w-full">
                             <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-sm shrink-0 border border-slate-100 group-hover:border-blue-200 transition-colors">
                                 <FolderOpen className="w-5 h-5 text-blue-600" />
@@ -91,7 +95,7 @@ export default function PatientDashboard() {
                             </div>
                         </CardContent>
                     </Card>
-                    <Card className="border-0 shadow-sm rounded-[1.5rem] bg-slate-50 hover:bg-slate-100 hover:shadow-md hover:-translate-y-1 transition-all cursor-pointer flex items-center group">
+                    <Card onClick={() => router.push('/appointments')} className="border-0 shadow-sm rounded-[1.5rem] bg-slate-50 hover:bg-slate-100 hover:shadow-md hover:-translate-y-1 transition-all cursor-pointer flex items-center group">
                         <CardContent className="p-6 flex items-center justify-center gap-5 w-full">
                             <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-sm shrink-0 border border-slate-100 group-hover:border-blue-200 transition-colors">
                                 <CalendarDays className="w-5 h-5 text-blue-600" />
@@ -102,7 +106,7 @@ export default function PatientDashboard() {
                             </div>
                         </CardContent>
                     </Card>
-                    <Card className="border-0 shadow-sm rounded-[1.5rem] bg-slate-50 hover:bg-slate-100 hover:shadow-md hover:-translate-y-1 transition-all cursor-pointer flex items-center group">
+                    <Card onClick={() => router.push('/appointments')} className="border-0 shadow-sm rounded-[1.5rem] bg-slate-50 hover:bg-slate-100 hover:shadow-md hover:-translate-y-1 transition-all cursor-pointer flex items-center group">
                         <CardContent className="p-6 flex items-center justify-center gap-5 w-full">
                             <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-sm shrink-0 border border-slate-100 group-hover:border-blue-200 transition-colors">
                                 <FileClock className="w-5 h-5 text-blue-600" />
@@ -123,7 +127,7 @@ export default function PatientDashboard() {
                         <div className="space-y-5">
                             <div className="flex items-center justify-between">
                                 <h3 className="text-xl font-bold text-slate-900">Upcoming Appointments</h3>
-                                <a href="#" className="text-[13px] font-bold text-blue-600 hover:text-blue-800 active:scale-95 transition-all">View all</a>
+                                <a href="#" onClick={(e) => { e.preventDefault(); router.push('/appointments'); }} className="text-[13px] font-bold text-blue-600 hover:text-blue-800 active:scale-95 transition-all text-center">View all</a>
                             </div>
                             <div className="space-y-4">
                                 {/* Appt 1 */}
