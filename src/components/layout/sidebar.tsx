@@ -5,31 +5,26 @@ import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import {
   LayoutDashboard,
-  BarChart,
-  FolderLock,
-  UploadCloud,
-  UserCheck,
-  ShieldCheck,
-  ActivitySquare,
-  Settings,
+  FolderOpen as Folder,
+  CalendarDays,
+  Shield,
+  ClipboardList,
+  UserCircle,
   HelpCircle,
   LogOut,
-  Bell
+  ShieldHalf
 } from 'lucide-react';
 
 const sidebarItems = [
   { name: 'Dashboard', href: '/dashboard/patient', icon: LayoutDashboard },
-  { name: 'Analytics', href: '/analytics', icon: BarChart },
-  { name: 'Patient Records', href: '/records', icon: FolderLock },
-  { name: 'Upload Record', href: '/upload-record', icon: UploadCloud },
-  { name: 'Access Management', href: '/access', icon: UserCheck },
-  { name: 'Access Requests', href: '/access/requests', icon: Bell },
-  { name: 'Audit Logs', href: '/audit', icon: ShieldCheck },
-  { name: 'Activity Timeline', href: '/activity', icon: ActivitySquare },
+  { name: 'Records', href: '/records', icon: Folder },
+  { name: 'Appointments', href: '/appointments', icon: CalendarDays },
+  { name: 'Access Control', href: '/access', icon: Shield },
+  { name: 'Requests', href: '/requests', icon: ClipboardList },
+  { name: 'Profile', href: '/profile', icon: UserCircle },
 ];
 
 const bottomItems = [
-  { name: 'Settings', href: '/settings', icon: Settings },
   { name: 'Help Center', href: '/help', icon: HelpCircle },
 ];
 
@@ -37,25 +32,36 @@ export function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <div className="w-64 bg-card border-r border-border h-full flex flex-col justify-between hidden md:flex rounded-tr-2xl rounded-br-2xl shadow-sm">
+    <div className="w-64 bg-slate-50/20 border-r border-slate-100 h-full flex flex-col justify-between hidden md:flex">
       <div className="p-6">
+        {/* Logo Section */}
+        <div className="flex items-center gap-3 mb-10 pt-2">
+          <div className="bg-blue-600 rounded-xl p-2.5 text-white shadow-md">
+            <ShieldHalf className="w-6 h-6" />
+          </div>
+          <div className="flex flex-col">
+            <span className="text-xl font-extrabold tracking-tight text-blue-600 leading-tight">MedChain</span>
+            <span className="text-[10px] font-bold tracking-[0.2em] text-slate-500 uppercase mt-0.5">Clinical Portal</span>
+          </div>
+        </div>
+
         <div className="space-y-1 mt-6">
-          <p className="text-xs uppercase text-muted-foreground font-semibold tracking-wider mb-4 px-3">Menu</p>
           {sidebarItems.map((item) => {
             const Icon = item.icon;
+            // Strict match for Dashboard route, or starts with for others
             const isActive = pathname.startsWith(item.href);
             return (
               <Link
                 key={item.name}
                 href={item.href}
                 className={cn(
-                  "flex items-center px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group",
-                  isActive 
-                    ? "bg-primary/10 text-primary" 
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  "flex items-center px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 group mb-1.5",
+                  isActive
+                    ? "bg-white text-blue-600 shadow-sm border border-slate-100/50"
+                    : "text-slate-500 hover:bg-white hover:text-slate-900"
                 )}
               >
-                <Icon className={cn("mr-3 h-5 w-5 transition-colors", isActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground")} />
+                <Icon className={cn("mr-3 h-5 w-5 transition-colors", isActive ? "text-blue-600" : "text-slate-400 group-hover:text-slate-600")} />
                 {item.name}
               </Link>
             );
@@ -71,16 +77,16 @@ export function Sidebar() {
               <Link
                 key={item.name}
                 href={item.href}
-                className="flex items-center px-3 py-2.5 rounded-xl text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-all duration-200 group"
+                className="flex items-center px-4 py-3 rounded-xl text-sm font-semibold text-slate-500 hover:bg-white hover:text-slate-900 transition-all duration-200 group mb-1.5"
               >
-                <Icon className="mr-3 h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
+                <Icon className="mr-3 h-5 w-5 text-slate-400 group-hover:text-slate-600 transition-colors" />
                 {item.name}
               </Link>
             );
           })}
-          <button className="w-full flex items-center px-3 py-2.5 rounded-xl text-sm font-medium text-destructive hover:bg-destructive/10 transition-all duration-200 mt-2">
-            <LogOut className="mr-3 h-5 w-5" />
-            Logout
+          <button className="w-full flex items-center px-4 py-3 rounded-xl text-sm font-semibold text-slate-500 hover:bg-white hover:text-slate-900 transition-all duration-200 group">
+            <LogOut className="mr-3 h-5 w-5 text-slate-400 group-hover:text-slate-600" />
+            Sign Out
           </button>
         </div>
       </div>

@@ -1,169 +1,284 @@
-import { BadgeCheck, FileText, Users, Activity, HeartPulse, Link2, ShieldAlert, ArrowUpRight, ArrowRight, ShieldCheck, Mail, Phone, MapPin } from "lucide-react"
+import {
+    Search, Bell, Settings, User, BadgeCheck, FileText, Users, Activity,
+    HeartPulse, Link2, ShieldAlert, ArrowUpRight, ArrowRight, ShieldCheck,
+    Mail, Phone, MapPin, UploadCloud, CalendarDays, FolderOpen, CalendarCheck, FileClock, ChevronRight, ActivitySquare, LogIn, HardDriveUpload
+} from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
-import { PatientRecordsChart } from "@/components/charts/patient-records-chart"
 import { Button } from "@/components/ui/button"
 
 export default function PatientDashboard() {
     return (
-        <div className="flex-1 space-y-6 p-8 pt-6 animate-in fade-in slide-in-from-bottom-4 duration-500 bg-slate-50 min-h-[calc(100vh-4rem)] lg:max-w-7xl mx-auto">
+        <div className="min-h-full bg-slate-50/50 pb-16">
+            <div className="flex-1 space-y-10 p-8 max-w-[1100px] animate-in fade-in duration-500 mt-2">
 
-            {/* Standard Dashboard Header */}
-            <div className="flex items-center justify-between space-y-2">
-                <h2 className="text-3xl font-bold tracking-tight text-slate-900 border-l-4 border-primary pl-4">Dashboard</h2>
-                <div className="flex items-center space-x-2">
-                    <Button variant="outline" className="hidden md:flex bg-white">
-                        <FileText className="mr-2 h-4 w-4" /> Download Report
-                    </Button>
-                    <Button className="shadow-sm">
-                        <Activity className="mr-2 h-4 w-4" /> Upload Record
-                    </Button>
-                </div>
-            </div>
-
-            {/* Top Stats Overview (Clean Row) */}
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <Card className="shadow-sm border-slate-200/60 bg-white">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium text-slate-600">Total Records</CardTitle>
-                        <FileText className="h-4 w-4 text-blue-500 opacity-80" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold text-slate-900">42</div>
-                        <p className="text-xs text-muted-foreground mt-1 flex items-center">
-                            <span className="text-emerald-500 flex items-center mr-1 font-medium"><ArrowUpRight className="h-3 w-3" /> +10.5%</span> from last month
+                {/* Header Section */}
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <h2 className="text-[2rem] font-bold tracking-tight text-slate-900 flex items-center gap-2">
+                            Good Morning, Alok 👋
+                        </h2>
+                        <p className="text-slate-500 font-semibold mt-2 text-[15px]">
+                            Your health records are up to date and secured via blockchain.
                         </p>
-                    </CardContent>
-                </Card>
-                <Card className="shadow-sm border-slate-200/60 bg-white">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium text-slate-600">Active Providers</CardTitle>
-                        <Users className="h-4 w-4 text-indigo-500 opacity-80" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold text-slate-900">3</div>
-                        <p className="text-xs text-muted-foreground mt-1 text-slate-500 font-medium">
-                            Currently authorized to view
-                        </p>
-                    </CardContent>
-                </Card>
-                <Card className="shadow-sm border-slate-200/60 bg-white">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium text-slate-600">Fully Verified</CardTitle>
-                        <BadgeCheck className="h-4 w-4 text-emerald-500 opacity-80" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold text-slate-900">100%</div>
-                        <p className="text-xs text-muted-foreground mt-1 text-slate-500 font-medium">
-                            Secured on Polygon blockchain
-                        </p>
-                    </CardContent>
-                </Card>
-                <Card className="shadow-sm border-slate-200/60 bg-white border-b-2 border-b-emerald-500">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium text-slate-600">Health Score</CardTitle>
-                        <HeartPulse className="h-4 w-4 text-rose-500 opacity-80" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold text-slate-900 text-emerald-600">85 / 100</div>
-                        <p className="text-xs text-muted-foreground mt-1 text-slate-500 font-medium">
-                            Data Complete & Intact
-                        </p>
-                    </CardContent>
-                </Card>
-            </div>
-
-            {/* Main Details Section */}
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-
-                {/* Chart Area - 4 columns */}
-                <Card className="col-span-4 shadow-sm border-slate-200/60 flex flex-col bg-white">
-                    <CardHeader>
-                        <CardTitle>Overview</CardTitle>
-                        <CardDescription>
-                            Upload history of your medical documents over the year.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent className="pl-2 flex-1 min-h-[300px]">
-                        <PatientRecordsChart />
-                    </CardContent>
-                </Card>
-
-                {/* Active Contracts Table - 3 columns */}
-                <Card className="col-span-3 shadow-sm border-slate-200/60 flex flex-col bg-white">
-                    <CardHeader>
-                        <CardTitle>Active Smart Contracts</CardTitle>
-                        <CardDescription>
-                            Manage the providers who have access to your health data.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent className="flex-1 px-4">
-                        <div className="space-y-4">
-                            {[
-                                { dr: "Dr. Sarah Adams", role: "Primary Care", status: "Active", dot: "bg-emerald-500" },
-                                { dr: "Metro General Hospital", role: "Emergency Services", status: "Active", dot: "bg-emerald-500" },
-                                { dr: "Dr. Michael Chen", role: "Cardiologist", status: "Expiring", dot: "bg-amber-500" },
-                            ].map((contract, i) => (
-                                <div key={i} className="flex items-center justify-between p-3 border border-slate-100 rounded-lg bg-slate-50/50 hover:bg-slate-50 transition-colors">
-                                    <div className="flex items-center space-x-4">
-                                        <div className="relative">
-                                            <div className="h-10 w-10 flex border border-slate-200 rounded-full items-center justify-center bg-white shadow-sm">
-                                                <Users className="h-5 w-5 text-slate-500" />
-                                            </div>
-                                            <span className={`absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full border-2 border-white ${contract.dot}`}></span>
-                                        </div>
-                                        <div className="space-y-1">
-                                            <p className="text-sm font-semibold leading-none text-slate-900">{contract.dr}</p>
-                                            <p className="text-xs text-muted-foreground font-medium">{contract.role}</p>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-center space-x-2">
-                                        <div className="text-[11px] uppercase tracking-wider font-bold text-slate-500 bg-white border border-slate-200 px-2 py-1 rounded shadow-sm">
-                                            {contract.status}
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
+                    </div>
+                    <div className="flex items-center">
+                        <div className="flex items-center gap-2 px-5 py-2.5 bg-blue-50/80 text-blue-600 font-bold rounded-full shadow-sm text-sm border border-blue-100/50">
+                            <ShieldCheck className="w-4 h-4" />
+                            Identity Verified
                         </div>
-                    </CardContent>
-                    <CardFooter className="pt-4 border-t border-slate-100 mt-2">
-                        <Button variant="ghost" className="w-full text-sm text-primary font-semibold hover:bg-primary/5">
-                            Manage All Access <ArrowRight className="ml-2 w-4 h-4" />
-                        </Button>
-                    </CardFooter>
-                </Card>
-            </div>
+                    </div>
+                </div>
 
-            {/* Bottom Section - Timeline */}
-            <Card className="shadow-sm border-slate-200/60 bg-white">
-                <CardHeader>
-                    <CardTitle>Recent Activity</CardTitle>
-                    <CardDescription>
-                        A complete audit trail of all actions taking place on your decentralized records.
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <div className="space-y-6">
-                        {[
-                            { time: '2h ago', title: 'Data Accessed', desc: 'Dr. Smith accessed Blood Test Results via Contract #241', icon: Activity, color: 'text-indigo-600', bg: 'bg-indigo-50 border-indigo-100' },
-                            { time: '1d ago', title: 'File Uploaded', desc: 'New MRI Scan encrypted and pinned to IPFS', icon: FileText, color: 'text-blue-600', bg: 'bg-blue-50 border-blue-100' },
-                            { time: '3d ago', title: 'Access Revoked', desc: 'Read access successfully stripped from Dr. Adams', icon: ShieldAlert, color: 'text-amber-600', bg: 'bg-amber-50 border-amber-100' },
-                        ].map((item, i) => (
-                            <div key={i} className="flex gap-4 group">
-                                <div className={`mt-0.5 w-10 h-10 rounded-full flex items-center justify-center border ${item.bg} ${item.color} shrink-0 group-hover:scale-110 transition-transform`}>
-                                    <item.icon className="h-4 w-4" />
-                                </div>
-                                <div className="flex flex-col flex-1 pb-5 border-b border-slate-100 last:border-0 last:pb-0">
-                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-                                        <p className="text-sm font-semibold text-slate-900 group-hover:text-primary transition-colors">{item.title}</p>
-                                        <p className="text-xs font-medium text-slate-400">{item.time}</p>
-                                    </div>
-                                    <p className="text-sm text-slate-600 mt-1">{item.desc}</p>
+                {/* Action Cards (Row 1) */}
+                <div className="grid gap-6 md:grid-cols-2">
+                    {/* Upload Card */}
+                    <Card className="relative overflow-hidden border border-slate-100 shadow-sm rounded-[2rem] bg-white">
+                        <div className="absolute right-[-10%] top-[-10%] opacity-[0.03] pointer-events-none">
+                            <HardDriveUpload className="w-[300px] h-[300px] text-blue-600" />
+                        </div>
+                        <CardContent className="p-8 pb-8 space-y-6">
+                            <div className="flex justify-between items-start">
+                                <div className="w-14 h-14 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center">
+                                    <HardDriveUpload className="w-6 h-6" />
                                 </div>
                             </div>
-                        ))}
+                            <div className="space-y-3">
+                                <h3 className="text-[1.35rem] font-bold text-slate-900">Upload Medical Record</h3>
+                                <p className="text-slate-500 font-medium max-w-[85%] leading-relaxed">
+                                    Securely store your reports and lab results in your private vault.
+                                </p>
+                            </div>
+                            <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-full py-6 text-[15px] font-bold shadow-md transition-all">
+                                Upload
+                            </Button>
+                        </CardContent>
+                    </Card>
+
+                    {/* Book Appointment Card */}
+                    <Card className="relative overflow-hidden border border-slate-100 shadow-sm rounded-[2rem] bg-white">
+                        <div className="absolute right-[-10%] top-[-10%] opacity-[0.03] pointer-events-none">
+                            <CalendarDays className="w-[300px] h-[300px] text-blue-600" />
+                        </div>
+                        <CardContent className="p-8 pb-8 space-y-6">
+                            <div className="flex justify-between items-start">
+                                <div className="w-14 h-14 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center">
+                                    <CalendarDays className="w-6 h-6" />
+                                </div>
+                            </div>
+                            <div className="space-y-3">
+                                <h3 className="text-[1.35rem] font-bold text-slate-900">Book Appointment</h3>
+                                <p className="text-slate-500 font-medium max-w-[85%] leading-relaxed">
+                                    Schedule a consultation with top-rated doctors in our network.
+                                </p>
+                            </div>
+                            <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-full py-6 text-[15px] font-bold shadow-md transition-all">
+                                Book Now
+                            </Button>
+                        </CardContent>
+                    </Card>
+                </div>
+
+                {/* Stats Row (Row 2) */}
+                <div className="grid gap-6 md:grid-cols-3">
+                    <Card className="border-0 shadow-sm rounded-[1.5rem] bg-slate-50 flex items-center">
+                        <CardContent className="p-6 flex items-center justify-center gap-5 w-full">
+                            <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-sm shrink-0 border border-slate-100">
+                                <FolderOpen className="w-5 h-5 text-blue-600" />
+                            </div>
+                            <div className="flex flex-col">
+                                <p className="text-[11px] font-extrabold text-slate-500 tracking-widest mb-1">TOTAL RECORDS</p>
+                                <h4 className="text-[1.75rem] font-extrabold text-slate-900 leading-none">24</h4>
+                            </div>
+                        </CardContent>
+                    </Card>
+                    <Card className="border-0 shadow-sm rounded-[1.5rem] bg-slate-50 flex items-center">
+                        <CardContent className="p-6 flex items-center justify-center gap-5 w-full">
+                            <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-sm shrink-0 border border-slate-100">
+                                <CalendarDays className="w-5 h-5 text-blue-600" />
+                            </div>
+                            <div className="flex flex-col">
+                                <p className="text-[11px] font-extrabold text-slate-500 tracking-widest mb-1">UPCOMING</p>
+                                <h4 className="text-[1.75rem] font-extrabold text-slate-900 leading-none">02</h4>
+                            </div>
+                        </CardContent>
+                    </Card>
+                    <Card className="border-0 shadow-sm rounded-[1.5rem] bg-slate-50 flex items-center">
+                        <CardContent className="p-6 flex items-center justify-center gap-5 w-full">
+                            <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-sm shrink-0 border border-slate-100">
+                                <FileClock className="w-5 h-5 text-blue-600" />
+                            </div>
+                            <div className="flex flex-col">
+                                <p className="text-[11px] font-extrabold text-slate-500 tracking-widest mb-1">PENDING REQUESTS</p>
+                                <h4 className="text-[1.75rem] font-extrabold text-slate-900 leading-none">05</h4>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+
+                {/* Bottom Section (Row 3) */}
+                <div className="grid gap-12 lg:grid-cols-[1.5fr_1fr] items-start pt-2">
+                    {/* Left Column: Upcoming Appts + Stats overview */}
+                    <div className="space-y-10">
+                        {/* Upcoming Appointments */}
+                        <div className="space-y-5">
+                            <div className="flex items-center justify-between">
+                                <h3 className="text-xl font-bold text-slate-900">Upcoming Appointments</h3>
+                                <a href="#" className="text-[13px] font-bold text-blue-600 hover:text-blue-700">View all</a>
+                            </div>
+                            <div className="space-y-4">
+                                {/* Appt 1 */}
+                                <Card className="border border-slate-100/50 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] rounded-[1.5rem] bg-white">
+                                    <CardContent className="p-5 flex items-center justify-between">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-14 h-14 bg-slate-100 rounded-full flex items-center justify-center overflow-hidden shrink-0">
+                                                <img src="https://i.pravatar.cc/150?img=47" alt="Dr. Sarah Jenkins" className="w-full h-full object-cover" />
+                                            </div>
+                                            <div>
+                                                <h4 className="text-[15px] font-bold text-slate-900">Dr. Sarah Jenkins</h4>
+                                                <p className="text-[13px] font-medium text-slate-500 mt-0.5">Cardiologist • City Heart Center</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-5 shrink-0">
+                                            <div className="text-right">
+                                                <div className="text-[14px] font-bold text-slate-900">Oct 24, 2023</div>
+                                                <div className="text-[12px] font-medium text-slate-500 mt-0.5">10:30 AM</div>
+                                            </div>
+                                            <span className="px-3.5 py-1.5 bg-blue-50 text-blue-600 text-[11px] font-bold rounded-full">Confirmed</span>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+
+                                {/* Appt 2 */}
+                                <Card className="border border-slate-100/50 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] rounded-[1.5rem] bg-white">
+                                    <CardContent className="p-5 flex items-center justify-between">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-14 h-14 bg-slate-100 rounded-full flex items-center justify-center overflow-hidden shrink-0">
+                                                <img src="https://i.pravatar.cc/150?img=11" alt="Dr. Michael Chen" className="w-full h-full object-cover" />
+                                            </div>
+                                            <div>
+                                                <h4 className="text-[15px] font-bold text-slate-900">Dr. Michael Chen</h4>
+                                                <p className="text-[13px] font-medium text-slate-500 mt-0.5">General Physician • Health First Clinic</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-5 shrink-0">
+                                            <div className="text-right">
+                                                <div className="text-[14px] font-bold text-slate-900">Oct 28, 2023</div>
+                                                <div className="text-[12px] font-medium text-slate-500 mt-0.5">02:15 PM</div>
+                                            </div>
+                                            <span className="px-3.5 py-1.5 bg-orange-50/80 text-orange-600 text-[11px] font-bold rounded-full">Pending</span>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            </div>
+                        </div>
+
+                        {/* Health Status Overview */}
+                        <Card className="border border-slate-100/50 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] rounded-[1.5rem] bg-gradient-to-br from-orange-50/20 to-orange-50/40">
+                            <CardContent className="p-7">
+                                <div className="flex items-start justify-between mb-8">
+                                    <div>
+                                        <h3 className="text-[17px] font-bold text-slate-900">Health Status Overview</h3>
+                                        <p className="text-[13px] text-slate-500 font-medium mt-1">Last vitals measured 2 days ago</p>
+                                    </div>
+                                    <div className="text-orange-600/80">
+                                        <ActivitySquare className="w-6 h-6" />
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-3 gap-4">
+                                    <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-5 shadow-sm border border-slate-100/50">
+                                        <span className="text-[10px] font-extrabold text-slate-400 tracking-widest mb-3 block">HEART RATE</span>
+                                        <div className="flex items-baseline gap-1">
+                                            <span className="text-2xl font-extrabold text-slate-900">72</span>
+                                            <span className="text-xs font-bold text-slate-400">bpm</span>
+                                        </div>
+                                    </div>
+                                    <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-5 shadow-sm border border-slate-100/50">
+                                        <span className="text-[10px] font-extrabold text-slate-400 tracking-widest mb-3 block">BP</span>
+                                        <div className="flex items-baseline gap-1">
+                                            <span className="text-2xl font-extrabold text-slate-900">120/80</span>
+                                            <span className="text-xs font-bold text-slate-400">mmHg</span>
+                                        </div>
+                                    </div>
+                                    <div className="bg-orange-50 rounded-2xl p-5 shadow-sm border border-orange-100/50">
+                                        <span className="text-[10px] font-extrabold text-orange-600/80 tracking-widest mb-3 block">SPO2</span>
+                                        <div className="flex items-baseline gap-1">
+                                            <span className="text-2xl font-extrabold text-orange-600">98</span>
+                                            <span className="text-xs font-bold text-orange-400">%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
                     </div>
-                </CardContent>
-            </Card>
+
+                    {/* Right Column: Recent Activity */}
+                    <div className="space-y-6">
+                        <h3 className="text-xl font-bold text-slate-900">Recent Activity</h3>
+                        <div className="relative pl-6 lg:pl-8 space-y-10 before:absolute before:inset-0 before:left-3.5 before:h-full before:w-[2px] before:bg-slate-100">
+
+                            {/* Item 1 */}
+                            <div className="relative flex items-start gap-5">
+                                <div className="absolute top-0 left-[-1.9rem] w-8 h-8 rounded-full bg-blue-50/80 ring-4 ring-white flex items-center justify-center text-blue-600 shrink-0">
+                                    <FileText className="w-3.5 h-3.5" />
+                                </div>
+                                <div className="pt-0.5">
+                                    <p className="text-[12px] font-bold text-slate-500 mb-1">Today, 09:15 AM</p>
+                                    <h4 className="text-[14px] font-bold text-slate-900 mb-1.5">Record uploaded</h4>
+                                    <p className="text-[13px] text-slate-500 font-medium leading-relaxed">
+                                        MRI Scan - Lumbar Spine has been encrypted and saved to your vault.
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Item 2 */}
+                            <div className="relative flex items-start gap-5">
+                                <div className="absolute top-0 left-[-1.9rem] w-8 h-8 rounded-full bg-green-50 ring-4 ring-white flex items-center justify-center text-green-600 shrink-0">
+                                    <ShieldCheck className="w-4 h-4" />
+                                </div>
+                                <div className="pt-0.5">
+                                    <p className="text-[12px] font-bold text-slate-500 mb-1">Yesterday</p>
+                                    <h4 className="text-[14px] font-bold text-slate-900 mb-1.5">Request approved</h4>
+                                    <p className="text-[13px] text-slate-500 font-medium leading-relaxed">
+                                        St. Mary's Hospital successfully accessed your vaccination records.
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Item 3 */}
+                            <div className="relative flex items-start gap-5">
+                                <div className="absolute top-0 left-[-1.9rem] w-8 h-8 rounded-full bg-blue-50/80 ring-4 ring-white flex items-center justify-center text-blue-600 shrink-0">
+                                    <CalendarDays className="w-3.5 h-3.5" />
+                                </div>
+                                <div className="pt-0.5">
+                                    <p className="text-[12px] font-bold text-slate-500 mb-1">Oct 20, 2023</p>
+                                    <h4 className="text-[14px] font-bold text-slate-900 mb-1.5">Appointment booked</h4>
+                                    <p className="text-[13px] text-slate-500 font-medium leading-relaxed">
+                                        Your session with Dr. Sarah Jenkins is confirmed for Oct 24.
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Item 4 */}
+                            <div className="relative flex items-start gap-5">
+                                <div className="absolute top-0 left-[-1.9rem] w-8 h-8 rounded-full border border-slate-200 bg-white ring-4 ring-white flex items-center justify-center text-slate-400 shrink-0">
+                                    <LogIn className="w-3.5 h-3.5 ml-0.5" />
+                                </div>
+                                <div className="pt-0.5">
+                                    <p className="text-[12px] font-bold text-slate-500 mb-1">Oct 19, 2023</p>
+                                    <h4 className="text-[14px] font-bold text-slate-900 mb-1.5">New login detected</h4>
+                                    <p className="text-[13px] text-slate-500 font-medium leading-relaxed">
+                                        A new device signed in from San Jose, CA.
+                                    </p>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
         </div>
     )
 }
