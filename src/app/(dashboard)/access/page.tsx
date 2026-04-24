@@ -1,13 +1,52 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
     ShieldCheck, Lock, FileText, Search, Bell, Settings, User, Globe, AlertCircle,
     ActivitySquare, CheckCircle2, XCircle, Unlock
 } from "lucide-react"
+import { accessApi, AccessRequestModel, AccessGrantModel } from '@/lib/api/access';
+import { sharingApi } from '@/lib/api/sharing';
 
 export default function AccessControlPage() {
     const [activeTab, setActiveTab] = useState('my-records');
+    const [requests, setRequests] = useState<AccessRequestModel[]>([]);
+    const [grants, setGrants] = useState<AccessGrantModel[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    const fetchAccessData = async () => {
+        try {
+            const [reqs, gs] = await Promise.all([
+                accessApi.getRequests(),
+                accessApi.getGrants()
+            ]);
+            setRequests(reqs);
+            setGrants(gs);
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchAccessData();
+    }, []);
+
+    const handleGrantAccess = async () => {
+        try {
+            const res = await sharingApi.generateToken();
+            await navigator.clipboard.writeText(res.share_url);
+            alert(`Secure Medical Records Link Generated and Copied! 🔐\n\nProvide this securely to your healthcare professional: \n${res.share_url}\n\n(Expires on ${new Date(res.expires_at).toLocaleString()})`);
+        } catch (err) {
+            console.error(err);
+            alert('Failed to generate immutable sharing token.');
+        }
+    };
+
+    const handleAuditLog = () => {
+        alert('Decentralized Audit Logging feature is currently scheduled for the upcoming MedChain v2.0 upgrade. ✨');
+    };
 
     return (
         <div className="min-h-full bg-slate-50/50 pb-20 relative">
@@ -30,7 +69,7 @@ export default function AccessControlPage() {
                             <button className="px-5 py-2 bg-white text-blue-600 font-bold text-[13px] rounded-full shadow-sm">
                                 Active
                             </button>
-                            <button className="px-5 py-2 text-slate-500 hover:text-slate-800 font-bold text-[13px] rounded-full transition-colors">
+                            <button onClick={handleAuditLog} className="px-5 py-2 text-slate-500 hover:text-slate-800 font-bold text-[13px] rounded-full transition-colors">
                                 Audit Log
                             </button>
                         </div>
@@ -65,12 +104,15 @@ export default function AccessControlPage() {
                             }`}
                     >
                         Requests
-                        <span className="bg-[#b56b3e] text-white text-[10px] px-2 py-0.5 rounded-full">3</span>
+                        <span className={`${requests.filter(r => r.status === 'Pending').length > 0 ? 'bg-[#b56b3e]' : 'bg-slate-300'} text-white text-[10px] px-2 py-0.5 rounded-full`}>
+                            {requests.filter(r => r.status === 'Pending').length}
+                        </span>
                     </button>
                 </div>
 
                 {/* Records Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {activeTab === 'my-records' && (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
                     {/* Card 1 */}
                     <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-slate-100/80 group hover:-translate-y-1 hover:shadow-lg transition-all flex flex-col justify-between min-h-[220px]">
                         <div>
@@ -94,7 +136,7 @@ export default function AccessControlPage() {
                                 <span className="text-[12px] font-medium text-slate-500">3 Shared Access</span>
                             </div>
                         </div>
-                        <button className="w-full mt-6 py-2.5 font-bold text-[13px] text-blue-600 border border-blue-100 rounded-xl hover:bg-blue-50 active:scale-95 transition-all">
+                        <button onClick={handleGrantAccess} className="w-full mt-6 py-2.5 font-bold text-[13px] text-blue-600 border border-blue-100 rounded-xl hover:bg-blue-50 active:scale-95 transition-all">
                             Grant Access
                         </button>
                     </div>
@@ -118,7 +160,7 @@ export default function AccessControlPage() {
                                 <span className="text-[12px] font-medium text-slate-500">1 Shared Access</span>
                             </div>
                         </div>
-                        <button className="w-full mt-6 py-2.5 font-bold text-[13px] text-blue-600 border border-blue-100 rounded-xl hover:bg-blue-50 active:scale-95 transition-all">
+                        <button onClick={handleGrantAccess} className="w-full mt-6 py-2.5 font-bold text-[13px] text-blue-600 border border-blue-100 rounded-xl hover:bg-blue-50 active:scale-95 transition-all">
                             Grant Access
                         </button>
                     </div>
@@ -142,106 +184,98 @@ export default function AccessControlPage() {
                                 <span className="text-[12px] font-medium text-slate-500">No active shares</span>
                             </div>
                         </div>
-                        <button className="w-full mt-6 py-2.5 font-bold text-[13px] text-blue-600 border border-blue-100 rounded-xl hover:bg-blue-50 active:scale-95 transition-all">
+                        <button onClick={handleGrantAccess} className="w-full mt-6 py-2.5 font-bold text-[13px] text-blue-600 border border-blue-100 rounded-xl hover:bg-blue-50 active:scale-95 transition-all">
                             Grant Access
                         </button>
                     </div>
                 </div>
+                )}
 
-                {/* Middle Layout (Grid 1:2) */}
-                <div className="grid grid-cols-1 lg:grid-cols-[1fr_2fr] gap-6">
-                    {/* Urgent Request Card */}
-                    <div className="bg-white rounded-[2rem] p-8 shadow-sm border-2 border-[#b56b3e]/20 relative overflow-hidden flex flex-col justify-between h-full">
-                        <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-[#b56b3e]"></div>
-
-                        <div>
-                            <div className="flex items-center gap-3 mb-6">
-                                <div className="w-10 h-10 bg-[#fff5f0] text-[#b56b3e] rounded-full flex items-center justify-center">
-                                    <AlertCircle className="w-5 h-5" />
-                                </div>
-                                <h3 className="text-[17px] font-bold text-slate-900">Urgent Request</h3>
+                {/* Requests Tab */}
+                {activeTab === 'requests' && (
+                    <div className="bg-white rounded-[2rem] p-8 shadow-sm border-2 border-[#b56b3e]/20 relative overflow-y-auto flex flex-col min-h-[400px] max-w-4xl mx-auto w-full animate-in fade-in slide-in-from-bottom-2 duration-300">
+                        <div className="flex items-center gap-3 mb-6">
+                            <div className="w-10 h-10 bg-[#fff5f0] text-[#b56b3e] rounded-full flex items-center justify-center shrink-0">
+                                <AlertCircle className="w-5 h-5" />
                             </div>
-
-                            <p className="text-[14px] font-medium text-slate-600 leading-relaxed max-w-[90%]">
-                                St. Jude Medical Center is requesting access to your <span className="font-bold text-slate-900">Emergency Profile</span> for an upcoming procedure.
-                            </p>
+                            <h3 className="text-[17px] font-bold text-slate-900">Access Requests</h3>
                         </div>
-
-                        <div className="flex items-center gap-3 mt-8">
-                            <button className="flex-1 py-3 bg-[#b56b3e] text-white font-bold text-[13px] rounded-xl hover:bg-[#965731] active:scale-95 transition-all">
-                                Approve
-                            </button>
-                            <button className="flex-1 py-3 bg-slate-100 text-slate-700 font-bold text-[13px] rounded-xl hover:bg-slate-200 active:scale-95 transition-all">
-                                Decline
-                            </button>
-                        </div>
+                        
+                        {loading ? (
+                            <div className="flex-1 flex items-center justify-center text-slate-400 font-medium animate-pulse">Loading...</div>
+                        ) : requests.filter(r => r.status === 'Pending').length === 0 ? (
+                            <div className="flex-1 flex flex-col items-center justify-center text-center">
+                                <ShieldCheck className="w-12 h-12 text-slate-200 mb-3" />
+                                <div className="text-slate-500 font-bold text-[14px]">No pending requests</div>
+                                <div className="text-slate-400 font-medium text-[13px] mt-1">Your privacy is secure</div>
+                            </div>
+                        ) : (
+                            <div className="space-y-4">
+                                {requests.filter(r => r.status === 'Pending').map(req => (
+                                    <div key={req.id} className="p-5 bg-slate-50/80 border border-slate-100 rounded-2xl flex flex-col justify-between hover:border-[#b56b3e]/30 transition-all">
+                                        <p className="text-[14px] font-medium text-slate-600 leading-relaxed mb-5">
+                                            <strong className="text-slate-900">Dr. {req.doctor_details?.last_name || req.doctor_details?.first_name || 'Doctor'}</strong> is requesting access to your Full Medical Profile.
+                                        </p>
+                                        <div className="flex gap-3">
+                                            <button onClick={async () => { await accessApi.approveRequest(req.id); fetchAccessData(); }} className="flex-1 py-3 bg-[#b56b3e] text-white font-bold text-[13px] rounded-xl hover:bg-[#965731] active:scale-95 transition-all outline-none">
+                                                Approve
+                                            </button>
+                                            <button onClick={async () => { await accessApi.declineRequest(req.id); fetchAccessData(); }} className="flex-1 py-3 bg-white border border-slate-200 shadow-sm text-slate-700 font-bold text-[13px] rounded-xl hover:bg-slate-50 hover:text-red-600 active:scale-95 transition-all outline-none">
+                                                Decline
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
+                )}
 
-                    {/* Authorized Doctors List */}
-                    <div className="bg-slate-50/50 rounded-[2rem] p-6">
+                {/* Authorized Doctors List */}
+                {activeTab === 'authorized-doctors' && (
+                    <div className="bg-slate-50/50 rounded-[2rem] p-6 min-h-[400px] max-h-[600px] overflow-y-auto border border-slate-100 max-w-5xl mx-auto w-full animate-in fade-in slide-in-from-bottom-2 duration-300">
                         {/* Table Header */}
-                        <div className="grid grid-cols-[1.5fr_2fr_1fr] items-center px-4 pb-4 border-b border-slate-200 text-[10px] font-extrabold text-slate-400 tracking-wider uppercase">
+                        <div className="grid grid-cols-[1.5fr_2fr_1fr] items-center px-4 pb-4 border-b border-slate-200 text-[10px] font-extrabold text-slate-400 tracking-wider uppercase bg-slate-50/80 sticky top-0 backdrop-blur-sm z-10">
                             <div>AUTHORIZED DOCTOR</div>
                             <div>RECORDS SHARED</div>
                             <div className="justify-self-end">ACTION</div>
                         </div>
 
                         {/* Rows */}
-                        <div className="space-y-4 pt-4">
-                            {/* Row 1 */}
-                            <div className="bg-white p-4 rounded-3xl flex items-center justify-between shadow-sm border border-slate-100 group">
-                                <div className="grid grid-cols-[1.5fr_2fr_1fr] items-center w-full gap-4">
-
-                                    <div className="flex items-center gap-3 pl-2">
-                                        <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center overflow-hidden shrink-0">
-                                            <img src="https://i.pravatar.cc/150?img=47" alt="Doctor" className="w-full h-full object-cover" />
+                        <div className="space-y-3 pt-4">
+                            {loading ? (
+                                <div className="text-center text-[13px] font-bold text-slate-400 mt-10 animate-pulse">Fetching authorizations...</div>
+                            ) : grants.length === 0 ? (
+                                <div className="text-center flex items-center justify-center flex-col mt-16">
+                                    <Lock className="w-12 h-12 text-slate-200 mb-3" />
+                                    <span className="text-[14px] font-bold text-slate-500">No authorized doctors</span>
+                                </div>
+                            ) : grants.map(grant => (
+                                <div key={grant.id} className="bg-white p-4 rounded-2xl flex items-center justify-between shadow-sm border border-slate-100 hover:shadow-md transition-shadow group">
+                                    <div className="grid grid-cols-[1.5fr_2fr_1fr] items-center w-full gap-4">
+                                        <div className="flex items-center gap-3 pl-2">
+                                            <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center overflow-hidden shrink-0">
+                                                <User className="w-5 h-5" />
+                                            </div>
+                                            <div className="overflow-hidden">
+                                                <h4 className="text-[14px] font-bold text-slate-900 truncate">Dr. {grant.doctor_details?.last_name || grant.doctor_details?.first_name || 'Doctor'}</h4>
+                                                <p className="text-[11px] font-bold text-slate-400 truncate">{grant.doctor_details?.email}</p>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <h4 className="text-[14px] font-bold text-slate-900">Dr. Sarah Jenkins</h4>
-                                            <p className="text-[12px] font-medium text-slate-500">Chief Cardiologist</p>
+                                        <div className="flex flex-wrap gap-2">
+                                            <span className="px-3 py-1.5 bg-blue-50 text-blue-600 text-[10px] font-bold tracking-wide rounded-md">Full Access</span>
                                         </div>
-                                    </div>
-
-                                    <div className="flex flex-wrap gap-2">
-                                        <span className="px-3 py-1.5 bg-slate-100 text-slate-600 text-[11px] font-bold rounded-md">Cardiology Summary, Blood Labs</span>
-                                    </div>
-
-                                    <div className="justify-self-end pr-2">
-                                        <button className="text-[12px] font-bold text-red-600 hover:text-red-700 active:scale-95 transition-all">
-                                            Revoke Access
-                                        </button>
+                                        <div className="justify-self-end pr-2">
+                                            <button onClick={async () => { await accessApi.revokeGrant(grant.id); fetchAccessData(); }} className="text-[12px] font-bold text-red-500 hover:text-red-700 hover:bg-red-50 px-3 py-1.5 rounded-lg active:scale-95 transition-all">
+                                                Revoke
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-
-                            {/* Row 2 */}
-                            <div className="bg-white p-4 rounded-3xl flex items-center justify-between shadow-sm border border-slate-100 group">
-                                <div className="grid grid-cols-[1.5fr_2fr_1fr] items-center w-full gap-4">
-
-                                    <div className="flex items-center gap-3 pl-2">
-                                        <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center overflow-hidden shrink-0">
-                                            <img src="https://i.pravatar.cc/150?img=11" alt="Doctor" className="w-full h-full object-cover" />
-                                        </div>
-                                        <div>
-                                            <h4 className="text-[14px] font-bold text-slate-900">Dr. Michael Chen</h4>
-                                            <p className="text-[12px] font-medium text-slate-500">Neurologist</p>
-                                        </div>
-                                    </div>
-
-                                    <div className="flex flex-wrap gap-2">
-                                        <span className="px-3 py-1.5 bg-slate-100 text-slate-600 text-[11px] font-bold rounded-md">MRI Scans, Clinical Notes</span>
-                                    </div>
-
-                                    <div className="justify-self-end pr-2">
-                                        <button className="text-[12px] font-bold text-red-600 hover:text-red-700 active:scale-95 transition-all">
-                                            Revoke Access
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
+                            ))}
                         </div>
                     </div>
-                </div>
+                )}
 
                 {/* Bottom Banner Component */}
                 <div className="mt-8 bg-blue-600 rounded-[2rem] p-8 text-white flex flex-col md:flex-row items-center justify-between shadow-lg shadow-blue-600/20">
