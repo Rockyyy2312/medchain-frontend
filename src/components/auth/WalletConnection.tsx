@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { Wallet, ArrowLeft, ArrowRight, Link as LinkIcon, Info, ShieldCheck } from "lucide-react";
 
@@ -9,6 +10,8 @@ interface WalletConnectionProps {
 }
 
 export default function WalletConnection({ onBack, onComplete }: WalletConnectionProps) {
+  const [walletAddress, setWalletAddress] = useState("");
+
   return (
     <div className="w-full max-w-2xl animate-in fade-in duration-500">
       {/* Step Progress Indicator */}
@@ -69,6 +72,8 @@ export default function WalletConnection({ onBack, onComplete }: WalletConnectio
                 id="wallet-address" 
                 placeholder="0x..." 
                 type="text"
+                value={walletAddress}
+                onChange={(e) => setWalletAddress(e.target.value)}
               />
               <div className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-300">
                 <LinkIcon size={20} />
@@ -86,7 +91,7 @@ export default function WalletConnection({ onBack, onComplete }: WalletConnectio
               <ShieldCheck className="text-med-blue w-6 h-6" />
             </div>
             <div>
-              <h4 className="font-bold text-on-surface text-sm">Privacy Guarantee</h4>
+              <h4 className="font-bold text-med-text text-sm">Privacy Guarantee</h4>
               <p className="text-xs text-med-secondary mt-1">
                 MedChain never stores your private keys. Your wallet is only used to sign transactions and verify ownership of your health data.
               </p>
@@ -96,8 +101,9 @@ export default function WalletConnection({ onBack, onComplete }: WalletConnectio
           {/* Primary Action */}
           <div className="pt-6">
             <button 
-              onClick={() => onComplete("0x...")}
-              className="w-full clinical-gradient text-white py-5 rounded-2xl font-bold text-lg shadow-lg shadow-blue-600/20 transition-all hover:scale-[1.01] active:scale-[0.98]"
+              onClick={() => onComplete(walletAddress || "0x_metamask_demo")}
+              disabled={!walletAddress}
+              className="w-full clinical-gradient text-white py-5 rounded-2xl font-bold text-lg shadow-lg shadow-blue-600/20 transition-all hover:scale-[1.01] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Create Account
             </button>

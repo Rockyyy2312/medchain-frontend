@@ -65,6 +65,7 @@ export default function LoginForm({ onSwitchToRegister, onLogin }: LoginFormProp
               <button 
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? "Hide password" : "Show password"}
                 className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-med-blue transition-colors"
               >
                 {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}

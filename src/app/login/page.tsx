@@ -27,7 +27,7 @@ export default function AuthPage() {
       {/* Top Navigation Bar */}
       <header className="bg-med-bg/80 backdrop-blur-md sticky top-0 z-50 border-b border-gray-100">
         <div className="flex justify-between items-center w-full px-8 py-4 max-w-7xl mx-auto">
-          <div className="font-manrope font-black text-2xl text-med-blue tracking-tighter cursor-pointer" onClick={() => setView("login")}>
+          <div className="font-sans font-black text-2xl text-med-blue tracking-tighter cursor-pointer" onClick={() => setView("login")}>
             MedChain
           </div>
           <div className="flex items-center gap-6">
@@ -56,7 +56,7 @@ export default function AuthPage() {
       <footer className="bg-white border-t border-gray-100 mt-auto">
         <div className="flex flex-col md:flex-row justify-between items-center w-full px-8 py-12 max-w-7xl mx-auto gap-8">
           <div className="flex flex-col gap-2 items-center md:items-start">
-            <div className="font-manrope font-black text-xl text-med-blue tracking-tighter">MedChain</div>
+            <div className="font-sans font-black text-xl text-med-blue tracking-tighter">MedChain</div>
             <p className="text-sm tracking-wide text-med-secondary">
               © 2024 MedChain Health Systems. Clinical Etherealism Design.
             </p>
@@ -102,11 +102,10 @@ export default function AuthPage() {
         onComplete={(addr) => {
           console.log("Account created with wallet:", addr);
           document.cookie = `auth_token=trusted-wallet-${userRole}; path=/`;
-          if (userRole === "patient") {
-            router.push("/dashboard/patient");
-          } else {
-            router.push(`/dashboard/${userRole}`);
-          }
+          if (userName) document.cookie = `user_name=${encodeURIComponent(userName)}; path=/`;
+          
+          // Map all roles to patient dashboard since it's the only one that exists for now
+          router.push("/dashboard/patient");
         }}
       />
     );

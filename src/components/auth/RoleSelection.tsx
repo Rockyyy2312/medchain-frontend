@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { motion } from "framer-motion";
 import { User, BriefcaseMedical, CheckCircle2, ArrowLeft } from "lucide-react";
 
 interface RoleSelectionProps {

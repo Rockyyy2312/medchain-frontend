@@ -44,10 +44,11 @@ export default function RegisterForm({ onSwitchToLogin, onNext }: RegisterFormPr
           <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
             {/* Full Name */}
             <div className="space-y-2">
-              <label className="block text-sm font-semibold text-gray-600 ml-1">Full Name</label>
+              <label htmlFor="fullName" className="block text-sm font-semibold text-gray-600 ml-1">Full Name</label>
               <div className="relative">
                 <User className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
                 <input 
+                  id="fullName"
                   className="w-full pl-12 pr-4 py-4 bg-gray-50 border-0 rounded-2xl focus:ring-2 focus:ring-med-blue/20 focus:bg-white transition-all text-med-text placeholder:text-gray-400 outline-none" 
                   placeholder="Dr. Julian Pierce" 
                   type="text"
@@ -60,10 +61,11 @@ export default function RegisterForm({ onSwitchToLogin, onNext }: RegisterFormPr
 
             {/* Work Email */}
             <div className="space-y-2">
-              <label className="block text-sm font-semibold text-gray-600 ml-1">Work Email</label>
+              <label htmlFor="workEmail" className="block text-sm font-semibold text-gray-600 ml-1">Work Email</label>
               <div className="relative">
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
                 <input 
+                  id="workEmail"
                   className="w-full pl-12 pr-4 py-4 bg-gray-50 border-0 rounded-2xl focus:ring-2 focus:ring-med-blue/20 focus:bg-white transition-all text-med-text placeholder:text-gray-400 outline-none" 
                   placeholder="julian.pierce@medical.org" 
                   type="email"
@@ -75,10 +77,11 @@ export default function RegisterForm({ onSwitchToLogin, onNext }: RegisterFormPr
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Password */}
               <div className="space-y-2">
-                <label className="block text-sm font-semibold text-gray-600 ml-1">Password</label>
+                <label htmlFor="password" className="block text-sm font-semibold text-gray-600 ml-1">Password</label>
                 <div className="relative">
                   <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
                   <input 
+                    id="password"
                     className="w-full pl-12 pr-4 py-4 bg-gray-50 border-0 rounded-2xl focus:ring-2 focus:ring-med-blue/20 focus:bg-white transition-all text-med-text outline-none" 
                     placeholder="••••••••" 
                     type="password"
@@ -95,10 +98,11 @@ export default function RegisterForm({ onSwitchToLogin, onNext }: RegisterFormPr
 
               {/* Confirm Password */}
               <div className="space-y-2">
-                <label className="block text-sm font-semibold text-gray-600 ml-1">Confirm Password</label>
+                <label htmlFor="confirmPassword" className="block text-sm font-semibold text-gray-600 ml-1">Confirm Password</label>
                 <div className="relative">
                   <Shield className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
                   <input 
+                    id="confirmPassword"
                     className="w-full pl-12 pr-4 py-4 bg-gray-50 border-0 rounded-2xl focus:ring-2 focus:ring-med-blue/20 focus:bg-white transition-all text-med-text outline-none" 
                     placeholder="••••••••" 
                     type="password"
@@ -110,7 +114,8 @@ export default function RegisterForm({ onSwitchToLogin, onNext }: RegisterFormPr
             {/* CTA Button */}
             <button 
               onClick={() => onNext(name)}
-              className="w-full clinical-gradient text-white py-5 rounded-2xl font-bold text-lg shadow-lg shadow-blue-600/20 active:scale-95 transition-all mt-4" 
+              disabled={!name.trim()}
+              className="w-full clinical-gradient text-white py-5 rounded-2xl font-bold text-lg shadow-lg shadow-blue-600/20 active:scale-95 transition-all mt-4 disabled:opacity-50 disabled:cursor-not-allowed" 
               type="button"
             >
               Next
