@@ -19,11 +19,7 @@ export default function PatientDashboard() {
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
                         <h2 className="text-[2rem] font-bold tracking-tight text-slate-900 flex items-center gap-2">
-<<<<<<< HEAD
                             Good Morning, Patient 👋
-=======
-                            Good Morning , Peter 👋
->>>>>>> 44ca52bdedef8288ca4a2a4b598a3d2d1047fc30
                         </h2>
                         <p className="text-slate-500 font-semibold mt-2 text-[15px]">
                             Your health records are up to date and secured via blockchain.
