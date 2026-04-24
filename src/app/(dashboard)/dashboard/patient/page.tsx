@@ -135,10 +135,10 @@ export default function PatientDashboard() {
                                     <CardContent className="p-5 flex items-center justify-between">
                                         <div className="flex items-center gap-4">
                                             <div className="w-14 h-14 bg-slate-100 rounded-full flex items-center justify-center overflow-hidden shrink-0 group-hover:scale-105 transition-transform">
-                                                <img src="https://i.pravatar.cc/150?img=47" alt="Dr. Sarah Jenkins" className="w-full h-full object-cover" />
+                                                <img src="https://i.pravatar.cc/150?img=47" alt="Dr. Harpreet Singh" className="w-full h-full object-cover" />
                                             </div>
                                             <div>
-                                                <h4 className="text-[15px] font-bold text-slate-900 group-hover:text-blue-600 transition-colors">Dr. Sarah Jenkins</h4>
+                                                <h4 className="text-[15px] font-bold text-slate-900 group-hover:text-blue-600 transition-colors">Dr. Harpreet Singh</h4>
                                                 <p className="text-[13px] font-medium text-slate-500 mt-0.5">Cardiologist • City Heart Center</p>
                                             </div>
                                         </div>
@@ -157,10 +157,10 @@ export default function PatientDashboard() {
                                     <CardContent className="p-5 flex items-center justify-between">
                                         <div className="flex items-center gap-4">
                                             <div className="w-14 h-14 bg-slate-100 rounded-full flex items-center justify-center overflow-hidden shrink-0 group-hover:scale-105 transition-transform">
-                                                <img src="https://i.pravatar.cc/150?img=11" alt="Dr. Michael Chen" className="w-full h-full object-cover" />
+                                                <img src="https://i.pravatar.cc/150?img=11" alt="Dr. S. Subramaniam" className="w-full h-full object-cover" />
                                             </div>
                                             <div>
-                                                <h4 className="text-[15px] font-bold text-slate-900 group-hover:text-orange-600 transition-colors">Dr. Michael Chen</h4>
+                                                <h4 className="text-[15px] font-bold text-slate-900 group-hover:text-orange-600 transition-colors">Dr. S. Subramaniam</h4>
                                                 <p className="text-[13px] font-medium text-slate-500 mt-0.5">General Physician • Health First Clinic</p>
                                             </div>
                                         </div>
@@ -258,7 +258,7 @@ export default function PatientDashboard() {
                                     <p className="text-[12px] font-bold text-slate-500 mb-1">Oct 20, 2023</p>
                                     <h4 className="text-[14px] font-bold text-slate-900 mb-1.5 group-hover:text-blue-600 transition-colors">Appointment booked</h4>
                                     <p className="text-[13px] text-slate-500 font-medium leading-relaxed">
-                                        Your session with Dr. Sarah Jenkins is confirmed for Oct 24.
+                                        Your session with Dr. Harpreet Singh is confirmed for Oct 24.
                                     </p>
                                 </div>
                             </div>
