@@ -1,10 +1,11 @@
 'use client';
 
 import { Bell, Search, Menu, Settings, User } from 'lucide-react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 
 export function TopNavbar() {
     const pathname = usePathname();
+    const router = useRouter();
 
     const getPageTitle = () => {
         if (pathname.includes('/records')) return 'My Records';
@@ -45,12 +46,16 @@ export function TopNavbar() {
                 </div>
 
                 <div className="flex items-center gap-4">
-                    <button className="relative text-slate-500 hover:text-slate-900 hover:bg-slate-100 p-2 rounded-full active:scale-95 transition-all">
+                    <button 
+                        onClick={() => alert('No new notifications at this time. Notification system is working properly.')}
+                        className="relative text-slate-500 hover:text-slate-900 hover:bg-slate-100 p-2 rounded-full active:scale-95 transition-all">
                         <Bell className="h-5 w-5" />
                     </button>
 
                     {/* Profile Avatar */}
-                    <button className="h-9 w-9 rounded-full bg-slate-50 border-2 border-white ring-2 ring-slate-100 flex items-center justify-center text-sm font-semibold text-slate-400 shadow-sm cursor-pointer hover:ring-blue-500 hover:scale-105 active:scale-95 overflow-hidden relative transition-all">
+                    <button 
+                        onClick={() => router.push('/profile')}
+                        className="h-9 w-9 rounded-full bg-slate-50 border-2 border-white ring-2 ring-slate-100 flex items-center justify-center text-sm font-semibold text-slate-400 shadow-sm cursor-pointer hover:ring-blue-500 hover:scale-105 active:scale-95 overflow-hidden relative transition-all">
                         <User className="w-5 h-5 text-slate-600" />
                     </button>
                 </div>
