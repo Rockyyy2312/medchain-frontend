@@ -39,7 +39,7 @@ export default function ProfilePage() {
                                 </div>
                             </div>
 
-                            <h3 className="text-[1.35rem] font-bold text-slate-900 mb-1">Sarah J. Connor</h3>
+                            <h3 className="text-[1.35rem] font-bold text-slate-900 mb-1">Priya Sharma</h3>
                             <p className="text-[12px] font-medium text-slate-500 mb-8">Patient ID: #MC-8829-01</p>
 
                             <div className="bg-slate-50 w-full rounded-[1rem] p-4 flex items-center justify-between border border-slate-100/80 group hover:border-slate-200 hover:bg-slate-100/50 transition-colors cursor-pointer">
@@ -122,7 +122,7 @@ export default function ProfilePage() {
                                 <div className="space-y-2">
                                     <label className="text-[11px] font-extrabold text-slate-500">Full Legal Name</label>
                                     <div className="w-full bg-slate-50/80 border border-slate-100/80 text-slate-900 text-[14px] font-medium p-3.5 rounded-xl">
-                                        Sarah Jeanette Connor
+                                        Priya Sharma
                                     </div>
                                 </div>
                                 <div className="space-y-2">
@@ -134,13 +134,13 @@ export default function ProfilePage() {
                                 <div className="space-y-2">
                                     <label className="text-[11px] font-extrabold text-slate-500">Email Address</label>
                                     <div className="w-full bg-slate-50/80 border border-slate-100/80 text-slate-900 text-[14px] font-medium p-3.5 rounded-xl">
-                                        s.connor@sky-net.io
+                                        priya.sharma@gmail.com
                                     </div>
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-[11px] font-extrabold text-slate-500">Phone Number</label>
                                     <div className="w-full bg-slate-50/80 border border-slate-100/80 text-slate-900 text-[14px] font-medium p-3.5 rounded-xl">
-                                        +1 (555) 019-2348
+                                        +91 98765 43210
                                     </div>
                                 </div>
                             </div>
@@ -148,7 +148,7 @@ export default function ProfilePage() {
                             <div className="space-y-2">
                                 <label className="text-[11px] font-extrabold text-slate-500">Residential Address</label>
                                 <div className="w-full bg-slate-50/80 border border-slate-100/80 text-slate-900 text-[14px] font-medium p-3.5 rounded-xl">
-                                    742 Evergreen Terrace, Springfield, OR 97403
+                                    Block B, 1st Floor, Indira Nagar, Bangalore 560038
                                 </div>
                             </div>
                         </div>

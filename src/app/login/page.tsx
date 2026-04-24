@@ -3,10 +3,11 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useWalletStore } from "@/store/useWalletStore";
+import { authApi } from "@/lib/api/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Stethoscope, ShieldCheck, Activity, Loader2, Mail, Lock, User, Hospital } from "lucide-react";
+import { Stethoscope, ShieldCheck, Activity, Loader2, Mail, Lock, User, Hospital, AlertCircle } from "lucide-react";
 
 export default function AuthPage() {
     const router = useRouter();
@@ -14,6 +15,10 @@ export default function AuthPage() {
     const [isLoading, setIsLoading] = useState(false);
     const [isLogin, setIsLogin] = useState(true);
     const [selectedRole, setSelectedRole] = useState<'patient' | 'doctor'>('patient');
+    const [error, setError] = useState<string | null>(null);
+    const [name, setName] = useState('');
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
 
     const handleWalletConnect = async () => {
         setIsLoading(true);
@@ -34,11 +39,37 @@ export default function AuthPage() {
     const handleFormSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
-        // Simulate an API call for traditional auth
-        setTimeout(() => {
-            document.cookie = `auth_token=trusted-email-${selectedRole}; path=/`;
-            router.push(`/dashboard/${selectedRole}`);
-        }, 1500);
+        setError(null);
+
+        try {
+            let role: string;
+            if (isLogin) {
+                const res = await authApi.login({ email, password });
+                role = res.role === 'DOCTOR' ? 'doctor' : 'patient';
+            } else {
+                await authApi.register({
+                    email,
+                    password,
+                    role: selectedRole === 'doctor' ? 'DOCTOR' : 'PATIENT',
+                });
+                const res = await authApi.login({ email, password });
+                role = res.role === 'DOCTOR' ? 'doctor' : 'patient';
+            }
+
+            // Set the auth cookie using the REAL role from the backend
+            document.cookie = `auth_token=jwt-${role}; path=/; max-age=3600`;
+            router.push(`/dashboard/${role}`);
+        } catch (err: unknown) {
+            const axiosError = err as { response?: { data?: Record<string, unknown>; status?: number } };
+            if (axiosError.response?.data) {
+                const data = axiosError.response.data;
+                const msg = data.detail || data.error || data.email || data.password || JSON.stringify(data);
+                setError(String(msg));
+            } else {
+                setError('Connection failed. Is the backend server running on port 8000?');
+            }
+            setIsLoading(false);
+        }
     };
 
     return (
@@ -114,8 +145,8 @@ export default function AuthPage() {
                                     type="button"
                                     onClick={() => setSelectedRole('patient')}
                                     className={`flex items-center justify-center gap-2 py-2 px-4 rounded-lg text-sm font-semibold transition-all duration-200 ${selectedRole === 'patient'
-                                            ? 'bg-background text-foreground shadow-sm ring-1 ring-border'
-                                            : 'text-muted-foreground hover:text-foreground hover:bg-muted-foreground/10'
+                                        ? 'bg-background text-foreground shadow-sm ring-1 ring-border'
+                                        : 'text-muted-foreground hover:text-foreground hover:bg-muted-foreground/10'
                                         }`}
                                 >
                                     <User className="w-4 h-4" />
@@ -125,8 +156,8 @@ export default function AuthPage() {
                                     type="button"
                                     onClick={() => setSelectedRole('doctor')}
                                     className={`flex items-center justify-center gap-2 py-2 px-4 rounded-lg text-sm font-semibold transition-all duration-200 ${selectedRole === 'doctor'
-                                            ? 'bg-background text-foreground shadow-sm ring-1 ring-border'
-                                            : 'text-muted-foreground hover:text-foreground hover:bg-muted-foreground/10'
+                                        ? 'bg-background text-foreground shadow-sm ring-1 ring-border'
+                                        : 'text-muted-foreground hover:text-foreground hover:bg-muted-foreground/10'
                                         }`}
                                 >
                                     <Hospital className="w-4 h-4" />
@@ -144,7 +175,7 @@ export default function AuthPage() {
                                         </label>
                                         <div className="relative">
                                             <User className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                                            <Input id="name" required placeholder="John Doe" className="pl-10 h-11" />
+                                            <Input id="name" required placeholder="John Doe" className="pl-10 h-11" value={name} onChange={(e) => setName(e.target.value)} />
                                         </div>
                                     </div>
                                 )}
@@ -155,7 +186,7 @@ export default function AuthPage() {
                                     </label>
                                     <div className="relative">
                                         <Mail className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                                        <Input id="email" type="email" required placeholder="name@example.com" className="pl-10 h-11" />
+                                        <Input id="email" type="email" required placeholder="name@example.com" className="pl-10 h-11" value={email} onChange={(e) => setEmail(e.target.value)} />
                                     </div>
                                 </div>
 
@@ -165,7 +196,7 @@ export default function AuthPage() {
                                     </label>
                                     <div className="relative">
                                         <Lock className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                                        <Input id="password" type="password" required placeholder="••••••••" className="pl-10 h-11" />
+                                        <Input id="password" type="password" required placeholder="••••••••" className="pl-10 h-11" value={password} onChange={(e) => setPassword(e.target.value)} />
                                     </div>
                                 </div>
 
@@ -176,6 +207,13 @@ export default function AuthPage() {
                                         isLogin ? "Sign In" : "Create Account"
                                     )}
                                 </Button>
+
+                                {error && (
+                                    <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-100 rounded-xl text-[13px] font-medium text-red-600">
+                                        <AlertCircle className="w-4 h-4 shrink-0" />
+                                        {error}
+                                    </div>
+                                )}
                             </form>
 
                             <div className="relative my-6 text-center">

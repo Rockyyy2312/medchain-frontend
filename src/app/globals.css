@@ -74,6 +74,12 @@
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
   --radius-2xl: calc(var(--radius) + 8px);
+  
+  --color-med-blue: #004ac6;
+  --color-med-light-blue: #2563eb;
+  --color-med-bg: #f7f9fb;
+  --color-med-text: #191c1e;
+  --color-med-secondary: #515f74;
 }
 
 @layer base {
@@ -83,4 +89,14 @@
   body {
     @apply bg-background text-foreground antialiased;
   }
+}
+
+.clinical-gradient {
+  background: linear-gradient(135deg, #004ac6 0%, #2563eb 100%);
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }

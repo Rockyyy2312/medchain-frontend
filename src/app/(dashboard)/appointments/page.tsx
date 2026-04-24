@@ -1,24 +1,129 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
     Plus, List, Calendar as CalendarIcon,
     MoreVertical, Info, FileText, ChevronDown, CheckCircle2, Clock,
     MapPin, User, Stethoscope, Loader2
 } from "lucide-react"
+import { appointmentsApi, Appointment } from '@/lib/api/appointments';
 
 export default function AppointmentsPage() {
     const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
+    
+    // API State
+    const [appointments, setAppointments] = useState<Appointment[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [apiError, setApiError] = useState('');
+
+    // Booking Form State
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isSubmitted, setIsSubmitted] = useState(false);
+    const [doctorName, setDoctorName] = useState('Dr. Harpreet Singh');
+    const [specialty, setSpecialty] = useState('Cardiologist');
+    const [date, setDate] = useState('');
+    const [time, setTime] = useState('');
+    const [reason, setReason] = useState('');
 
-    const handleQuickBook = () => {
+    const fetchAppointments = async () => {
+        try {
+            setIsLoading(true);
+            setApiError('');
+            const data = await appointmentsApi.getAppointments();
+            setAppointments(data.results);
+        } catch (err) {
+            setApiError('Failed to load appointments.');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchAppointments();
+        
+        // Default date/time
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        setDate(tomorrow.toISOString().split('T')[0]);
+        setTime('09:00');
+    }, []);
+
+    const handleQuickBook = async () => {
+        if (!date || !time) {
+            setApiError('Please select both date and time.');
+            return;
+        }
         setIsSubmitting(true);
-        setTimeout(() => {
-            setIsSubmitting(false);
+        setApiError('');
+        try {
+            await appointmentsApi.bookAppointment({
+                doctor_name: doctorName,
+                specialty: specialty,
+                appointment_date: date,
+                appointment_time: time + ':00', // Ensure HH:MM:SS format for Django
+                reason: reason
+            });
             setIsSubmitted(true);
+            setReason('');
+            fetchAppointments();
             setTimeout(() => setIsSubmitted(false), 3000);
-        }, 1500);
+        } catch (err) {
+            console.error('Failed to book', err);
+            setApiError('Failed to submit appointment. Please try again.');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const getStatusColor = (status: string) => {
+        switch(status.toLowerCase()) {
+            case 'confirmed': return { bg: 'bg-blue-50', text: 'text-blue-600', iconBg: 'bg-blue-600', tag: 'Confirmed' };
+            case 'pending': return { bg: 'bg-orange-50', text: 'text-orange-700', iconBg: 'bg-orange-600', tag: 'Awaiting Confirmation' };
+            case 'cancelled': return { bg: 'bg-red-50', text: 'text-red-600', iconBg: 'bg-red-600', tag: 'Cancelled' };
+            default: return { bg: 'bg-slate-100', text: 'text-slate-500', iconBg: 'bg-slate-400', tag: 'Completed' };
+        }
+    };
+
+    const renderCalendar = () => {
+        const currentYear = new Date().getFullYear();
+        const currentMonth = new Date().getMonth();
+        const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+        const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+
+        const cells = [];
+        for (let i = 0; i < firstDay; i++) {
+            cells.push(<div key={`empty-${i}`} className="min-h-[100px] border border-slate-100 bg-slate-50/50 p-2 rounded-xl"></div>);
+        }
+        for (let day = 1; day <= daysInMonth; day++) {
+            const dayAppointments = appointments.filter(apt => {
+                const aptDate = new Date(apt.appointment_date);
+                return aptDate.getDate() === day && aptDate.getMonth() === currentMonth && aptDate.getFullYear() === currentYear;
+            });
+
+            cells.push(
+                <div key={`day-${day}`} className={`min-h-[100px] border border-slate-100 bg-white p-2 flex flex-col gap-1 rounded-xl transition-all ${dayAppointments.length > 0 ? 'ring-2 ring-blue-500/20 shadow-sm' : 'hover:bg-slate-50'}`}>
+                    <span className={`text-[12px] font-bold self-end mb-1 ${day === new Date().getDate() ? 'bg-blue-600 w-6 h-6 flex items-center justify-center rounded-full text-white shadow-sm' : 'text-slate-400'}`}>{day}</span>
+                    {dayAppointments.map((apt) => {
+                       const c = getStatusColor(apt.status);
+                       return <div key={apt.id} className={`text-[9.5px] font-bold px-1.5 py-1 rounded-[0.4rem] truncate ${c.bg} ${c.text}`}>{apt.appointment_time.slice(0, 5)} - {apt.doctor_name.split(' ').pop()}</div>
+                    })}
+                </div>
+            );
+        }
+        
+        return (
+            <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-slate-100 animate-in fade-in slide-in-from-bottom-2 duration-300">
+               <div className="flex items-center justify-between mb-6 px-2">
+                   <h3 className="text-[1.35rem] font-bold text-slate-900 tracking-tight capitalize">{new Date().toLocaleString('default', { month: 'long', year: 'numeric' })}</h3>
+               </div>
+               <div className="grid grid-cols-7 gap-3 mb-3 text-center text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">
+                   {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => <div key={d}>{d}</div>)}
+               </div>
+               <div className="grid grid-cols-7 gap-3">
+                   {cells}
+               </div>
+            </div>
+        );
     };
 
     return (
@@ -40,7 +145,9 @@ export default function AppointmentsPage() {
                             </p>
                         </div>
                         <div className="pt-2">
-                            <button className="flex items-center gap-2 px-6 py-3.5 bg-blue-600 hover:bg-blue-700 active:scale-95 transition-all text-white font-bold rounded-full shadow-md shadow-blue-600/20 text-[15px]">
+                            <button 
+                                onClick={() => document.getElementById('booking-form')?.scrollIntoView({ behavior: 'smooth' })}
+                                className="flex items-center gap-2 px-6 py-3.5 bg-blue-600 hover:bg-blue-700 active:scale-95 transition-all text-white font-bold rounded-full shadow-md shadow-blue-600/20 text-[15px]">
                                 <Plus className="w-5 h-5" />
                                 Book Appointment
                             </button>
@@ -55,7 +162,7 @@ export default function AppointmentsPage() {
                     <div className="space-y-6">
 
                         {/* Quick Booking Card */}
-                        <div className="bg-white rounded-[2rem] p-8 shadow-sm border border-slate-100">
+                        <div id="booking-form" className="bg-white rounded-[2rem] p-8 shadow-sm border border-slate-100">
                             <div className="flex items-center gap-3 mb-8">
                                 <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 font-bold flex items-center justify-center text-sm">
                                     1
@@ -64,42 +171,46 @@ export default function AppointmentsPage() {
                             </div>
 
                             <div className="space-y-6">
+                                {apiError && (
+                                    <div className="p-4 bg-red-50 text-red-600 border border-red-100 rounded-xl text-sm font-bold animate-in fade-in">
+                                        {apiError}
+                                    </div>
+                                )}
                                 {/* Select Specialist */}
                                 <div className="space-y-2.5">
                                     <label className="text-[10px] font-extrabold text-slate-400 tracking-widest uppercase">Select Specialist</label>
-                                    <div className="flex items-center justify-between bg-slate-50 hover:bg-slate-100 active:scale-[0.98] transition-all rounded-2xl p-3 border border-slate-100 cursor-pointer">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-12 h-12 rounded-xl bg-slate-200 overflow-hidden shrink-0">
-                                                <img src="https://i.pravatar.cc/150?img=47" alt="Dr. Sarah Jenkins" className="w-full h-full object-cover" />
-                                            </div>
-                                            <div>
-                                                <h4 className="text-[14px] font-bold text-slate-900">Dr. Sarah Jenkins</h4>
-                                                <p className="text-[12px] font-medium text-slate-500">Cardiologist • MD</p>
-                                            </div>
-                                        </div>
-                                        <ChevronDown className="w-5 h-5 text-slate-400 mr-1" />
-                                    </div>
+                                    <select 
+                                        value={doctorName}
+                                        onChange={(e) => {
+                                            setDoctorName(e.target.value);
+                                            setSpecialty(e.target.value === 'Dr. S. Subramaniam' ? 'Dermatology' : 'Cardiology');
+                                        }}
+                                        className="w-full bg-slate-50 hover:bg-slate-100 transition-all rounded-2xl p-4 border border-slate-100 outline-none text-[14px] font-bold text-slate-900 focus:border-blue-500"
+                                    >
+                                        <option value="Dr. Harpreet Singh">Dr. Harpreet Singh (Cardiology)</option>
+                                        <option value="Dr. S. Subramaniam">Dr. S. Subramaniam (Dermatology)</option>
+                                    </select>
                                 </div>
 
                                 {/* Date & Time */}
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2.5">
                                         <label className="text-[10px] font-extrabold text-slate-400 tracking-widest uppercase">Preferred Date</label>
-                                        <div className="flex flex-col justify-center bg-slate-50 hover:bg-slate-100 active:scale-[0.98] transition-all cursor-pointer rounded-2xl p-4 border border-slate-100 min-h-[5.5rem]">
-                                            <div className="flex items-start gap-2">
-                                                <CalendarIcon className="w-4 h-4 text-blue-600 mt-0.5 shrink-0" />
-                                                <span className="text-[14px] font-bold text-slate-900 leading-tight">Oct 24,<br />2023</span>
-                                            </div>
-                                        </div>
+                                        <input 
+                                            type="date"
+                                            value={date}
+                                            onChange={(e) => setDate(e.target.value)}
+                                            className="w-full bg-slate-50 hover:bg-slate-100 transition-all rounded-2xl p-4 border border-slate-100 outline-none text-[14px] font-bold text-slate-900"
+                                        />
                                     </div>
                                     <div className="space-y-2.5">
                                         <label className="text-[10px] font-extrabold text-slate-400 tracking-widest uppercase">Time Slot</label>
-                                        <div className="flex flex-col justify-center bg-slate-50 hover:bg-slate-100 active:scale-[0.98] transition-all cursor-pointer rounded-2xl p-4 border border-slate-100 min-h-[5.5rem]">
-                                            <div className="flex items-start gap-2">
-                                                <Clock className="w-4 h-4 text-blue-600 mt-0.5 shrink-0" />
-                                                <span className="text-[14px] font-bold text-slate-900 leading-tight">09:30<br />AM</span>
-                                            </div>
-                                        </div>
+                                        <input 
+                                            type="time"
+                                            value={time}
+                                            onChange={(e) => setTime(e.target.value)}
+                                            className="w-full bg-slate-50 hover:bg-slate-100 transition-all rounded-2xl p-4 border border-slate-100 outline-none text-[14px] font-bold text-slate-900"
+                                        />
                                     </div>
                                 </div>
 
@@ -107,6 +218,8 @@ export default function AppointmentsPage() {
                                 <div className="space-y-2.5">
                                     <label className="text-[10px] font-extrabold text-slate-400 tracking-widest uppercase">Reason for Visit</label>
                                     <textarea
+                                        value={reason}
+                                        onChange={(e) => setReason(e.target.value)}
                                         className="w-full bg-slate-50 rounded-2xl p-4 border border-slate-100 text-[14px] font-medium text-slate-900 placeholder:text-slate-400 min-h-[100px] resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all"
                                         placeholder="Describe your symptoms or request..."
                                     ></textarea>
@@ -114,12 +227,12 @@ export default function AppointmentsPage() {
 
                                 <button
                                     onClick={handleQuickBook}
-                                    disabled={isSubmitting || isSubmitted}
+                                    disabled={isSubmitting || isSubmitted || !date || !time}
                                     className={`w-full py-4 font-bold text-[15px] rounded-2xl flex items-center justify-center gap-2 transition-all ${isSubmitted
                                             ? 'bg-green-100 text-green-700'
                                             : isSubmitting
                                                 ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
-                                                : 'bg-slate-200/80 hover:bg-slate-200 active:scale-95 text-blue-700'
+                                                : 'bg-blue-600 hover:bg-blue-700 active:scale-95 text-white shadow-md'
                                         }`}
                                 >
                                     {isSubmitting ? (
@@ -127,7 +240,7 @@ export default function AppointmentsPage() {
                                     ) : isSubmitted ? (
                                         <><CheckCircle2 className="w-5 h-5" /> Request Sent!</>
                                     ) : (
-                                        'Review Request'
+                                        'Submit Request'
                                     )}
                                 </button>
                             </div>
@@ -148,7 +261,7 @@ export default function AppointmentsPage() {
                                     <h3 className="text-[15px] font-bold">Important Note</h3>
                                 </div>
                                 <p className="text-[14px] leading-relaxed font-medium opacity-90">
-                                    For medical emergencies, please call 911 immediately or visit the nearest ER. Digital bookings are for routine consultations only.
+                                    For medical emergencies, please call 112 immediately or visit the nearest hospital casualty. Digital bookings are for routine consultations only.
                                 </p>
                             </div>
                         </div>
@@ -182,120 +295,94 @@ export default function AppointmentsPage() {
                             </div>
                             <div className="flex items-center gap-4 text-[12px] font-bold text-slate-500 hidden sm:flex">
                                 <span className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-blue-600"></div> Confirmed</span>
-                                <span className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-red-600"></div> Pending</span>
+                                <span className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-orange-600"></div> Pending</span>
                             </div>
                         </div>
 
                         {/* Rendering View dynamically based on state */}
                         {viewMode === 'list' ? (
                             <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                                {/* Card 1: Confirmed */}
-                                <div className="bg-white rounded-[2rem] p-4 flex flex-col sm:flex-row gap-6 shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
-                                    {/* Date Block */}
-                                    <div className="bg-slate-50 rounded-[1.5rem] w-full sm:w-32 py-5 flex flex-col items-center justify-center shrink-0 border border-slate-100/50">
-                                        <span className="text-[11px] font-extrabold text-slate-400 tracking-widest uppercase">Oct</span>
-                                        <span className="text-[2rem] font-black text-slate-900 leading-none my-1">24</span>
-                                        <span className="text-[12px] font-bold text-blue-600">09:30 AM</span>
+                                
+                                {isLoading ? (
+                                    <div className="flex flex-col items-center justify-center py-20 text-slate-500">
+                                        <Loader2 className="w-8 h-8 animate-spin mb-4" />
+                                        <p className="font-bold">Loading appointments...</p>
                                     </div>
+                                ) : appointments.length === 0 ? (
+                                    <div className="bg-white rounded-[2rem] border border-slate-100 py-20 flex flex-col items-center text-center">
+                                        <CalendarIcon className="w-12 h-12 text-slate-300 mb-4" />
+                                        <h3 className="text-lg font-bold text-slate-700">No Appointments</h3>
+                                        <p className="text-slate-500 max-w-sm mt-2">You don't have any appointments scheduled. Use the Quick Booking form to schedule one.</p>
+                                    </div>
+                                ) : (
+                                    appointments.map(apt => {
+                                        const c = getStatusColor(apt.status);
+                                        const aptDate = new Date(apt.appointment_date);
+                                        const month = aptDate.toLocaleString('default', { month: 'short' });
+                                        const day = aptDate.getDate();
+                                        
+                                        // Formatting time 09:00:00 -> 09:00 AM
+                                        const [hour, minute] = apt.appointment_time.split(':');
+                                        const h = parseInt(hour, 10);
+                                        const ampm = h >= 12 ? 'PM' : 'AM';
+                                        const formattedHour = h % 12 || 12;
 
-                                    {/* Content Block */}
-                                    <div className="flex-1 py-2 flex flex-col justify-center relative pr-4">
-                                        <button className="absolute top-2 right-0 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded-full p-1 active:scale-95 transition-all hidden sm:block">
-                                            <MoreVertical className="w-5 h-5" />
-                                        </button>
-                                        <div className="mb-3">
-                                            <span className="inline-block px-3 py-1 bg-blue-50 text-blue-600 text-[10px] font-extrabold tracking-wider rounded-full uppercase">Confirmed</span>
-                                        </div>
-                                        <h3 className="text-[18px] font-bold text-slate-900 mb-3 hover:text-blue-600 transition-colors cursor-pointer">Cardiovascular Screening</h3>
-                                        <div className="space-y-1.5">
-                                            <div className="flex items-center gap-2 text-[13px] text-slate-500 font-medium cursor-pointer hover:text-slate-900 transition-colors">
-                                                <Stethoscope className="w-4 h-4 text-slate-400" /> Dr. Sarah Jenkins
-                                            </div>
-                                            <div className="flex items-center gap-2 text-[13px] text-slate-500 font-medium">
-                                                <MapPin className="w-4 h-4 text-blue-500" /> North Wing, Suite 402
-                                            </div>
-                                        </div>
-                                    </div>
+                                        return (
+                                            <div key={apt.id} className="bg-white rounded-[2rem] p-4 flex flex-col sm:flex-row gap-6 shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
+                                                {/* Date Block */}
+                                                <div className="bg-slate-50 rounded-[1.5rem] w-full sm:w-32 py-5 flex flex-col items-center justify-center shrink-0 border border-slate-100/50">
+                                                    <span className="text-[11px] font-extrabold text-slate-400 tracking-widest uppercase">{month}</span>
+                                                    <span className="text-[2rem] font-black text-slate-900 leading-none my-1">{day}</span>
+                                                    <span className={`text-[12px] font-bold ${c.text}`}>{`${formattedHour}:${minute} ${ampm}`}</span>
+                                                </div>
 
-                                    {/* Actions Block */}
-                                    <div className="flex sm:flex-col justify-center gap-2.5 sm:w-28 shrink-0">
-                                        <button className="flex-1 sm:flex-none py-2.5 px-4 bg-slate-100 hover:bg-slate-200 active:scale-95 transition-all text-slate-800 font-bold text-[13px] rounded-xl text-center">
-                                            Details
-                                        </button>
-                                        <button className="flex-1 sm:flex-none py-2.5 px-4 bg-blue-50 hover:bg-blue-100 active:scale-95 transition-all text-blue-700 font-bold text-[13px] rounded-xl text-center">
-                                            Check-in
-                                        </button>
-                                    </div>
-                                </div>
+                                                {/* Content Block */}
+                                                <div className="flex-1 py-2 flex flex-col justify-center relative pr-4">
+                                                    <button className="absolute top-2 right-0 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded-full p-1 active:scale-95 transition-all hidden sm:block">
+                                                        <MoreVertical className="w-5 h-5" />
+                                                    </button>
+                                                    <div className="mb-3">
+                                                        <span className={`inline-block px-3 py-1 ${c.bg} ${c.text} text-[10px] font-extrabold tracking-wider rounded-full uppercase`}>
+                                                            {c.tag}
+                                                        </span>
+                                                    </div>
+                                                    <h3 className={`text-[18px] font-bold text-slate-900 mb-3 hover:${c.text} transition-colors cursor-pointer`}>
+                                                        {apt.specialty || 'General Consultation'}
+                                                    </h3>
+                                                    <div className="space-y-1.5">
+                                                        <div className="flex items-center gap-2 text-[13px] text-slate-500 font-medium">
+                                                            <Stethoscope className="w-4 h-4 text-slate-400" /> {apt.doctor_name}
+                                                        </div>
+                                                        <div className="flex items-center gap-2 text-[13px] text-slate-500 font-medium">
+                                                            <MapPin className="w-4 h-4 text-blue-500" /> Main Medical Center
+                                                        </div>
+                                                    </div>
+                                                </div>
 
-                                {/* Card 2: Pending */}
-                                <div className="bg-white rounded-[2rem] p-4 flex flex-col sm:flex-row gap-6 shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
-                                    <div className="bg-slate-50 rounded-[1.5rem] w-full sm:w-32 py-5 flex flex-col items-center justify-center shrink-0 border border-slate-100/50">
-                                        <span className="text-[11px] font-extrabold text-slate-400 tracking-widest uppercase">Nov</span>
-                                        <span className="text-[2rem] font-black text-slate-900 leading-none my-1">02</span>
-                                        <span className="text-[12px] font-bold text-[#b56b3e]">11:15 AM</span>
-                                    </div>
-                                    <div className="flex-1 py-2 flex flex-col justify-center relative pr-4">
-                                        <div className="mb-3">
-                                            <span className="inline-block px-3 py-1 bg-orange-50 text-orange-700 text-[10px] font-extrabold tracking-wider rounded-full uppercase">Awaiting Confirmation</span>
-                                        </div>
-                                        <h3 className="text-[18px] font-bold text-slate-900 mb-3 hover:text-orange-700 transition-colors cursor-pointer">Dermatology Consult</h3>
-                                        <div className="space-y-1.5">
-                                            <div className="flex items-center gap-2 text-[13px] text-slate-500 font-medium cursor-pointer hover:text-slate-900 transition-colors">
-                                                <Stethoscope className="w-4 h-4 text-[#b56b3e]" /> Dr. Michael Chen
+                                                {/* Actions Block */}
+                                                <div className="flex sm:flex-col justify-center gap-2.5 sm:w-28 shrink-0">
+                                                    {apt.status === 'Pending' ? (
+                                                        <>
+                                                            <button className="flex-1 sm:flex-none py-2.5 px-4 bg-slate-100 hover:bg-slate-200 active:scale-95 transition-all text-slate-700 font-bold text-[13px] rounded-xl text-center">
+                                                                Reschedule
+                                                            </button>
+                                                            <button className="flex-1 sm:flex-none py-2.5 px-4 bg-red-50 hover:bg-red-100 active:scale-95 transition-all text-red-600 font-bold text-[13px] rounded-xl text-center">
+                                                                Cancel
+                                                            </button>
+                                                        </>
+                                                    ) : (
+                                                        <button className="flex-1 sm:flex-none py-2.5 px-4 bg-slate-100 hover:bg-slate-200 active:scale-95 transition-all text-slate-800 font-bold text-[13px] rounded-xl text-center">
+                                                            Details
+                                                        </button>
+                                                    )}
+                                                </div>
                                             </div>
-                                            <div className="flex items-center gap-2 text-[13px] text-slate-500 font-medium">
-                                                <MapPin className="w-4 h-4 text-[#b56b3e]" /> East Medical Plaza
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="flex sm:flex-col justify-center gap-2.5 sm:w-28 shrink-0">
-                                        <button className="flex-1 sm:flex-none py-2.5 px-4 bg-slate-100 hover:bg-slate-200 active:scale-95 transition-all text-slate-700 font-bold text-[13px] rounded-xl text-center">
-                                            Reschedule
-                                        </button>
-                                        <button className="flex-1 sm:flex-none py-2.5 px-4 bg-red-50 hover:bg-red-100 active:scale-95 transition-all text-red-600 font-bold text-[13px] rounded-xl text-center">
-                                            Cancel
-                                        </button>
-                                    </div>
-                                </div>
-
-                                {/* Card 3: Completed */}
-                                <div className="bg-white/60 rounded-[2rem] p-4 flex flex-col sm:flex-row gap-6 shadow-sm border border-slate-100 opacity-75 hover:opacity-100 hover:shadow-md transition-all">
-                                    <div className="bg-slate-100/50 rounded-[1.5rem] w-full sm:w-32 py-5 flex flex-col items-center justify-center shrink-0 border border-slate-200/50">
-                                        <span className="text-[11px] font-extrabold text-slate-400 tracking-widest uppercase">Sep</span>
-                                        <span className="text-[2rem] font-black text-slate-400 leading-none my-1">15</span>
-                                        <span className="text-[12px] font-bold text-slate-400">02:00 PM</span>
-                                    </div>
-                                    <div className="flex-1 py-2 flex flex-col justify-center relative pr-4">
-                                        <div className="mb-3">
-                                            <span className="inline-block px-3 py-1 bg-slate-200 text-slate-500 text-[10px] font-extrabold tracking-wider rounded-full uppercase">Completed</span>
-                                        </div>
-                                        <h3 className="text-[18px] font-bold text-slate-400 mb-3 hover:text-slate-900 transition-colors cursor-pointer">Annual Physical Wellness</h3>
-                                        <div className="space-y-1.5">
-                                            <div className="flex items-center gap-2 text-[13px] text-slate-400 font-medium">
-                                                Dr. Sarah Jenkins <a href="#" className="ml-2 underline text-slate-400 hover:text-blue-600 transition-colors active:scale-95 inline-block">View Notes</a>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="flex sm:flex-col justify-center gap-2.5 sm:w-28 shrink-0">
-                                        <button className="flex-1 sm:flex-none py-2.5 px-4 bg-slate-100 hover:bg-slate-200 active:scale-95 transition-all text-slate-500 hover:text-slate-800 font-bold text-[13px] rounded-xl text-center">
-                                            Re-book
-                                        </button>
-                                    </div>
-                                </div>
+                                        )
+                                    })
+                                )}
                             </div>
                         ) : (
-                            <div className="w-full h-[450px] bg-white rounded-[2rem] border border-slate-100 shadow-sm flex flex-col items-center justify-center text-slate-400 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                                <CalendarIcon className="w-16 h-16 mb-4 text-slate-200" />
-                                <h3 className="text-xl font-bold text-slate-900 mb-2">Calendar View</h3>
-                                <p className="text-sm font-medium">This is a structural placeholder for the interactive calendar component.</p>
-                                <button
-                                    onClick={() => setViewMode('list')}
-                                    className="mt-6 px-6 py-2 bg-blue-50 text-blue-600 font-bold rounded-lg hover:bg-blue-100 active:scale-95 transition-all"
-                                >
-                                    Return to List View
-                                </button>
-                            </div>
+                            renderCalendar()
                         )}
                     </div>
                 </div>
@@ -306,7 +393,7 @@ export default function AppointmentsPage() {
                     <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-slate-100 flex flex-col justify-center min-h-[140px] hover:-translate-y-1 hover:shadow-md transition-all cursor-default">
                         <span className="text-[10px] font-extrabold text-slate-400 tracking-widest uppercase mb-4">Upcoming Visits</span>
                         <div className="flex items-baseline gap-2">
-                            <span className="text-[2.5rem] font-black text-blue-600 leading-none">02</span>
+                            <span className="text-[2.5rem] font-black text-blue-600 leading-none">{appointments.length < 10 ? `0${appointments.length}` : appointments.length}</span>
                             <span className="text-[15px] font-medium text-slate-500">scheduled</span>
                         </div>
                     </div>
@@ -315,7 +402,7 @@ export default function AppointmentsPage() {
                     <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-slate-100 flex flex-col justify-center min-h-[140px] hover:-translate-y-1 hover:shadow-md transition-all cursor-default">
                         <span className="text-[10px] font-extrabold text-slate-400 tracking-widest uppercase mb-4">Unread Results</span>
                         <div className="flex items-baseline gap-2">
-                            <span className="text-[2.5rem] font-black text-[#cc5500] leading-none">01</span>
+                            <span className="text-[2.5rem] font-black text-[#cc5500] leading-none">00</span>
                             <span className="text-[15px] font-medium text-slate-500">available</span>
                         </div>
                     </div>
@@ -327,9 +414,8 @@ export default function AppointmentsPage() {
                             <div className="flex -space-x-4">
                                 <img src="https://i.pravatar.cc/150?img=47" className="w-14 h-14 rounded-full border-4 border-white object-cover bg-slate-100 z-30 group-hover:scale-110 transition-transform" alt="Doctor" />
                                 <img src="https://i.pravatar.cc/150?img=11" className="w-14 h-14 rounded-full border-4 border-white object-cover bg-slate-100 z-20 group-hover:scale-110 transition-transform" alt="Doctor" />
-                                <img src="https://i.pravatar.cc/150?img=68" className="w-14 h-14 rounded-full border-4 border-white object-cover bg-slate-100 z-10 group-hover:scale-110 transition-transform" alt="Doctor" />
                                 <div className="w-14 h-14 rounded-full border-4 border-white bg-slate-100 z-0 flex items-center justify-center text-[14px] font-bold text-slate-500 shadow-sm group-hover:bg-slate-200 transition-colors">
-                                    +2
+                                    +1
                                 </div>
                             </div>
                         </div>
