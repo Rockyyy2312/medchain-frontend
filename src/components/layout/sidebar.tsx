@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import { useWalletStore } from '@/store/useWalletStore';
 import {
   LayoutDashboard,
   FolderOpen as Folder,
@@ -12,15 +13,23 @@ import {
   UserCircle,
   HelpCircle,
   LogOut,
-  ShieldHalf
+  ShieldHalf,
+  Share2
 } from 'lucide-react';
 
-const sidebarItems = [
+const patientSidebarItems = [
   { name: 'Dashboard', href: '/dashboard/patient', icon: LayoutDashboard },
   { name: 'Records', href: '/records', icon: Folder },
   { name: 'Appointments', href: '/appointments', icon: CalendarDays },
   { name: 'Access Control', href: '/access', icon: Shield },
   { name: 'Requests', href: '/requests', icon: ClipboardList },
+  { name: 'Profile', href: '/profile', icon: UserCircle },
+];
+
+const doctorSidebarItems = [
+  { name: 'Dashboard', href: '/dashboard/doctor', icon: LayoutDashboard },
+  { name: 'Shared with Me', href: '/records', icon: Share2 },
+  { name: 'Access Control', href: '/access', icon: Shield },
   { name: 'Profile', href: '/profile', icon: UserCircle },
 ];
 
@@ -31,26 +40,35 @@ const bottomItems = [
 export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
+  const { role } = useWalletStore();
+
+  const isDoctor = role === 'doctor';
+  const sidebarItems = isDoctor ? doctorSidebarItems : patientSidebarItems;
 
   return (
     <div className="w-64 bg-slate-50/20 border-r border-slate-100 h-full flex flex-col justify-between hidden md:flex">
       <div className="p-6">
         {/* Logo Section */}
         <Link href="/" className="flex items-center gap-3 mb-10 pt-2 cursor-pointer group hover:scale-[1.02] active:scale-95 transition-all">
-          <div className="bg-blue-600 rounded-xl p-2.5 text-white shadow-md group-hover:bg-blue-700 transition-colors">
+          <div className={cn("rounded-xl p-2.5 text-white shadow-md transition-colors", isDoctor ? "bg-emerald-600 group-hover:bg-emerald-700" : "bg-blue-600 group-hover:bg-blue-700")}>
             <ShieldHalf className="w-6 h-6" />
           </div>
           <div className="flex flex-col">
-            <span className="text-xl font-extrabold tracking-tight text-blue-600 leading-tight">MedChain</span>
-            <span className="text-[10px] font-bold tracking-[0.2em] text-slate-500 uppercase mt-0.5">Patient Portal</span>
+            <span className={cn("text-xl font-extrabold tracking-tight leading-tight", isDoctor ? "text-emerald-600" : "text-blue-600")}>MedChain</span>
+            <span className="text-[10px] font-bold tracking-[0.2em] text-slate-500 uppercase mt-0.5">
+              {isDoctor ? 'Provider Portal' : 'Patient Portal'}
+            </span>
           </div>
         </Link>
 
         <div className="space-y-1 mt-6">
           {sidebarItems.map((item) => {
             const Icon = item.icon;
-            // Strict match for Dashboard route, or starts with for others
             const isActive = pathname.startsWith(item.href);
+            const accentColor = isDoctor ? 'text-emerald-600' : 'text-blue-600';
+            const activeBg = isDoctor
+              ? 'bg-white text-emerald-600 shadow-sm border border-slate-100/50'
+              : 'bg-white text-blue-600 shadow-sm border border-slate-100/50';
             return (
               <Link
                 key={item.name}
@@ -58,11 +76,11 @@ export function Sidebar() {
                 className={cn(
                   "flex items-center px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 group mb-1.5 active:scale-95",
                   isActive
-                    ? "bg-white text-blue-600 shadow-sm border border-slate-100/50"
+                    ? activeBg
                     : "text-slate-500 hover:bg-white hover:text-slate-900 hover:shadow-sm"
                 )}
               >
-                <Icon className={cn("mr-3 h-5 w-5 transition-colors", isActive ? "text-blue-600" : "text-slate-400 group-hover:text-blue-600")} />
+                <Icon className={cn("mr-3 h-5 w-5 transition-colors", isActive ? accentColor : `text-slate-400 group-hover:${accentColor}`)} />
                 {item.name}
               </Link>
             );
