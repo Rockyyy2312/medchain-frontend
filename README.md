@@ -53,9 +53,6 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
   - `auth/`: Components related to the registration, role selection, and wallet connection flows.
 - `src/app/(dashboard)/`: Protected dashboard routes for different user roles.
 
-## Contributing 🤝
-
-Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## License 📄
 
