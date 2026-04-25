@@ -45,6 +45,14 @@ export function Sidebar() {
   const isDoctor = role === 'doctor';
   const sidebarItems = isDoctor ? doctorSidebarItems : patientSidebarItems;
 
+  const handleSignOut = () => {
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+    localStorage.removeItem('user_role');
+    document.cookie = "auth_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    window.location.href = '/login';
+  };
+
   return (
     <div className="w-64 bg-slate-50/20 border-r border-slate-100 h-full flex flex-col justify-between hidden md:flex">
       <div className="p-6">
@@ -104,7 +112,7 @@ export function Sidebar() {
             );
           })}
           <button
-            onClick={() => router.push('/')}
+            onClick={handleSignOut}
             className="w-full flex items-center px-4 py-3 rounded-xl text-sm font-semibold text-slate-500 hover:bg-white hover:text-red-600 hover:shadow-sm active:scale-95 transition-all duration-200 group"
           >
             <LogOut className="mr-3 h-5 w-5 text-slate-400 group-hover:text-red-500 transition-colors" />

@@ -21,16 +21,17 @@ export interface RegisterRequest {
 export interface RegisterResponse {
     message: string;
     user_id: string;
-    role: string;
 }
 
 export const authApi = {
     login: async (data: LoginRequest): Promise<LoginResponse> => {
         const response = await apiClient.post<LoginResponse>('/auth/login/', data);
-        localStorage.setItem('access_token', response.data.access);
-        localStorage.setItem('refresh_token', response.data.refresh);
-        localStorage.setItem('user_role', response.data.role);
-        localStorage.setItem('user_email', response.data.email);
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('access_token', response.data.access);
+            localStorage.setItem('refresh_token', response.data.refresh);
+            localStorage.setItem('user_role', response.data.role);
+            localStorage.setItem('user_email', response.data.email);
+        }
         return response.data;
     },
 
