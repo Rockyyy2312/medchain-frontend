@@ -1,7 +1,17 @@
+import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 
-export default function Home() {
-  // For the purpose of this prototype, we immediately redirect to the dashboard
-  // In a full implementation, you could build out a landing page here!
-  redirect('/dashboard/patient');
+export default async function Home() {
+  const cookieStore = await cookies();
+  const token = cookieStore.get('auth_token')?.value;
+
+  if (token) {
+    if (token.includes('doctor')) {
+      redirect('/dashboard/doctor');
+    } else {
+      redirect('/dashboard/patient');
+    }
+  }
+
+  redirect('/login');
 }
