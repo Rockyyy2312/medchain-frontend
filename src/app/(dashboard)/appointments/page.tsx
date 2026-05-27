@@ -7,6 +7,7 @@ import {
     MapPin, User, Stethoscope, Loader2
 } from "lucide-react"
 import { appointmentsApi, Appointment } from '@/lib/api/appointments';
+import { authApi } from '@/lib/api/auth';
 
 export default function AppointmentsPage() {
     const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
@@ -24,12 +25,14 @@ export default function AppointmentsPage() {
     const [date, setDate] = useState('');
     const [time, setTime] = useState('');
     const [reason, setReason] = useState('');
+    const [doctorsList, setDoctorsList] = useState<Array<{ id: string; email: string; name: string; specialty: string }>>([]);
 
     const fetchAppointments = async () => {
         try {
             setIsLoading(true);
             setApiError('');
-            const data = await appointmentsApi.getAppointments();
+            // Only fetch Confirmed appointments for the list/calendar view
+            const data = await appointmentsApi.getAppointments(1, 'Confirmed');
             setAppointments(data.results);
         } catch (err) {
             setApiError('Failed to load appointments.');
@@ -38,8 +41,22 @@ export default function AppointmentsPage() {
         }
     };
 
+    const fetchDoctors = async () => {
+        try {
+            const docs = await authApi.getDoctors();
+            setDoctorsList(docs);
+            if (docs.length > 0) {
+                setDoctorName(docs[0].name);
+                setSpecialty(docs[0].specialty);
+            }
+        } catch (err) {
+            console.error('Failed to fetch doctors', err);
+        }
+    };
+
     useEffect(() => {
         fetchAppointments();
+        fetchDoctors();
         
         // Default date/time
         const tomorrow = new Date();
@@ -65,7 +82,8 @@ export default function AppointmentsPage() {
             });
             setIsSubmitted(true);
             setReason('');
-            fetchAppointments();
+            // Don't refresh appointments here since new booking is Pending, 
+            // it won't show until confirmed via Requests page
             setTimeout(() => setIsSubmitted(false), 3000);
         } catch (err) {
             console.error('Failed to book', err);
@@ -141,7 +159,7 @@ export default function AppointmentsPage() {
                                 <span className="text-blue-600">care journey.</span>
                             </h2>
                             <p className="text-[15px] font-medium text-slate-500 mt-4 leading-relaxed max-w-xl">
-                                View upcoming visits, access digital consultation notes, and book new appointments with your specialist team.
+                                View upcoming visits, access digital consultation notes, and book new appointments. Booked appointments appear in <strong>Requests</strong> for confirmation first.
                             </p>
                         </div>
                         <div className="pt-2">
@@ -182,13 +200,41 @@ export default function AppointmentsPage() {
                                     <select 
                                         value={doctorName}
                                         onChange={(e) => {
-                                            setDoctorName(e.target.value);
-                                            setSpecialty(e.target.value === 'Dr. S. Subramaniam' ? 'Dermatology' : 'Cardiology');
+                                            const val = e.target.value;
+                                            setDoctorName(val);
+                                            const matchedDoc = doctorsList.find(d => d.name === val);
+                                            if (matchedDoc) {
+                                                setSpecialty(matchedDoc.specialty);
+                                            } else {
+                                                const specialtyMap: Record<string, string> = {
+                                                    'Dr. Harpreet Singh': 'Cardiology',
+                                                    'Dr. S. Subramaniam': 'Dermatology',
+                                                    'Dr. Rohan R Roy': 'Neurology',
+                                                    'Dr. Alok D Bhorunde': 'Orthopedics',
+                                                    'Dr. Harsh S Shah': 'General Medicine',
+                                                    'Dr. Laukik B Parashare': 'Pulmonology',
+                                                };
+                                                setSpecialty(specialtyMap[val] || 'General');
+                                            }
                                         }}
                                         className="w-full bg-slate-50 hover:bg-slate-100 transition-all rounded-2xl p-4 border border-slate-100 outline-none text-[14px] font-bold text-slate-900 focus:border-blue-500"
                                     >
-                                        <option value="Dr. Harpreet Singh">Dr. Harpreet Singh (Cardiology)</option>
-                                        <option value="Dr. S. Subramaniam">Dr. S. Subramaniam (Dermatology)</option>
+                                        {doctorsList.length > 0 ? (
+                                            doctorsList.map((doc) => (
+                                                <option key={doc.id} value={doc.name}>
+                                                    {doc.name} ({doc.specialty})
+                                                </option>
+                                            ))
+                                        ) : (
+                                            <>
+                                                <option value="Dr. Harpreet Singh">Dr. Harpreet Singh (Cardiology)</option>
+                                                <option value="Dr. S. Subramaniam">Dr. S. Subramaniam (Dermatology)</option>
+                                                <option value="Dr. Rohan R Roy">Dr. Rohan R Roy (Neurology)</option>
+                                                <option value="Dr. Alok D Bhorunde">Dr. Alok D Bhorunde (Orthopedics)</option>
+                                                <option value="Dr. Harsh S Shah">Dr. Harsh S Shah (General Medicine)</option>
+                                                <option value="Dr. Laukik B Parashare">Dr. Laukik B Parashare (Pulmonology)</option>
+                                            </>
+                                        )}
                                     </select>
                                 </div>
 
@@ -238,17 +284,22 @@ export default function AppointmentsPage() {
                                     {isSubmitting ? (
                                         <><Loader2 className="w-5 h-5 animate-spin" /> Processing...</>
                                     ) : isSubmitted ? (
-                                        <><CheckCircle2 className="w-5 h-5" /> Request Sent!</>
+                                        <><CheckCircle2 className="w-5 h-5" /> Sent to Requests!</>
                                     ) : (
                                         'Submit Request'
                                     )}
                                 </button>
+
+                                {isSubmitted && (
+                                    <p className="text-xs text-center text-emerald-600 font-medium animate-in fade-in">
+                                        ✓ Your appointment request is now in the <strong>Requests</strong> tab. Confirm it there to finalize.
+                                    </p>
+                                )}
                             </div>
                         </div>
 
                         {/* Important Note Card */}
                         <div className="bg-[#cc5500] hover:scale-[1.02] transition-transform cursor-default rounded-[2rem] p-8 relative overflow-hidden text-white shadow-md">
-                            {/* Background asterisk pattern */}
                             <div className="absolute -bottom-8 -right-8 opacity-10 pointer-events-none">
                                 <svg width="120" height="120" viewBox="0 0 24 24" fill="currentColor" stroke="none">
                                     <path d="M12 2v20M2 12h20M4.93 4.93l14.14 14.14M4.93 19.07L19.07 4.93" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
@@ -258,10 +309,13 @@ export default function AppointmentsPage() {
                             <div className="relative z-10 space-y-4">
                                 <div className="flex items-center gap-2">
                                     <Info className="w-5 h-5 opacity-90" />
-                                    <h3 className="text-[15px] font-bold">Important Note</h3>
+                                    <h3 className="text-[15px] font-bold">How Booking Works</h3>
                                 </div>
                                 <p className="text-[14px] leading-relaxed font-medium opacity-90">
-                                    For medical emergencies, please call 112 immediately or visit the nearest hospital casualty. Digital bookings are for routine consultations only.
+                                    1. Submit a booking request here<br/>
+                                    2. Go to <strong>Requests</strong> tab to review<br/>
+                                    3. <strong>Confirm</strong> → appears in your schedule<br/>
+                                    4. <strong>Reject</strong> → appointment is cancelled
                                 </p>
                             </div>
                         </div>
@@ -295,7 +349,6 @@ export default function AppointmentsPage() {
                             </div>
                             <div className="flex items-center gap-4 text-[12px] font-bold text-slate-500 hidden sm:flex">
                                 <span className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-blue-600"></div> Confirmed</span>
-                                <span className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-orange-600"></div> Pending</span>
                             </div>
                         </div>
 
@@ -306,13 +359,13 @@ export default function AppointmentsPage() {
                                 {isLoading ? (
                                     <div className="flex flex-col items-center justify-center py-20 text-slate-500">
                                         <Loader2 className="w-8 h-8 animate-spin mb-4" />
-                                        <p className="font-bold">Loading appointments...</p>
+                                        <p className="font-bold">Loading confirmed appointments...</p>
                                     </div>
                                 ) : appointments.length === 0 ? (
                                     <div className="bg-white rounded-[2rem] border border-slate-100 py-20 flex flex-col items-center text-center">
                                         <CalendarIcon className="w-12 h-12 text-slate-300 mb-4" />
-                                        <h3 className="text-lg font-bold text-slate-700">No Appointments</h3>
-                                        <p className="text-slate-500 max-w-sm mt-2">You don't have any appointments scheduled. Use the Quick Booking form to schedule one.</p>
+                                        <h3 className="text-lg font-bold text-slate-700">No Confirmed Appointments</h3>
+                                        <p className="text-slate-500 max-w-sm mt-2">Book an appointment using the form, then confirm it in the <strong>Requests</strong> tab to see it here.</p>
                                     </div>
                                 ) : (
                                     appointments.map(apt => {
@@ -321,7 +374,6 @@ export default function AppointmentsPage() {
                                         const month = aptDate.toLocaleString('default', { month: 'short' });
                                         const day = aptDate.getDate();
                                         
-                                        // Formatting time 09:00:00 -> 09:00 AM
                                         const [hour, minute] = apt.appointment_time.split(':');
                                         const h = parseInt(hour, 10);
                                         const ampm = h >= 12 ? 'PM' : 'AM';
@@ -338,43 +390,24 @@ export default function AppointmentsPage() {
 
                                                 {/* Content Block */}
                                                 <div className="flex-1 py-2 flex flex-col justify-center relative pr-4">
-                                                    <button className="absolute top-2 right-0 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded-full p-1 active:scale-95 transition-all hidden sm:block">
-                                                        <MoreVertical className="w-5 h-5" />
-                                                    </button>
                                                     <div className="mb-3">
                                                         <span className={`inline-block px-3 py-1 ${c.bg} ${c.text} text-[10px] font-extrabold tracking-wider rounded-full uppercase`}>
                                                             {c.tag}
                                                         </span>
                                                     </div>
-                                                    <h3 className={`text-[18px] font-bold text-slate-900 mb-3 hover:${c.text} transition-colors cursor-pointer`}>
+                                                    <h3 className="text-[18px] font-bold text-slate-900 mb-3">
                                                         {apt.specialty || 'General Consultation'}
                                                     </h3>
                                                     <div className="space-y-1.5">
                                                         <div className="flex items-center gap-2 text-[13px] text-slate-500 font-medium">
                                                             <Stethoscope className="w-4 h-4 text-slate-400" /> {apt.doctor_name}
                                                         </div>
-                                                        <div className="flex items-center gap-2 text-[13px] text-slate-500 font-medium">
-                                                            <MapPin className="w-4 h-4 text-blue-500" /> Main Medical Center
-                                                        </div>
+                                                        {apt.reason && (
+                                                            <div className="flex items-center gap-2 text-[13px] text-slate-500 font-medium">
+                                                                <FileText className="w-4 h-4 text-blue-500" /> {apt.reason}
+                                                            </div>
+                                                        )}
                                                     </div>
-                                                </div>
-
-                                                {/* Actions Block */}
-                                                <div className="flex sm:flex-col justify-center gap-2.5 sm:w-28 shrink-0">
-                                                    {apt.status === 'Pending' ? (
-                                                        <>
-                                                            <button className="flex-1 sm:flex-none py-2.5 px-4 bg-slate-100 hover:bg-slate-200 active:scale-95 transition-all text-slate-700 font-bold text-[13px] rounded-xl text-center">
-                                                                Reschedule
-                                                            </button>
-                                                            <button className="flex-1 sm:flex-none py-2.5 px-4 bg-red-50 hover:bg-red-100 active:scale-95 transition-all text-red-600 font-bold text-[13px] rounded-xl text-center">
-                                                                Cancel
-                                                            </button>
-                                                        </>
-                                                    ) : (
-                                                        <button className="flex-1 sm:flex-none py-2.5 px-4 bg-slate-100 hover:bg-slate-200 active:scale-95 transition-all text-slate-800 font-bold text-[13px] rounded-xl text-center">
-                                                            Details
-                                                        </button>
-                                                    )}
                                                 </div>
                                             </div>
                                         )
@@ -389,16 +422,14 @@ export default function AppointmentsPage() {
 
                 {/* Bottom Stats Row */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-6">
-                    {/* Stat 1 */}
                     <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-slate-100 flex flex-col justify-center min-h-[140px] hover:-translate-y-1 hover:shadow-md transition-all cursor-default">
-                        <span className="text-[10px] font-extrabold text-slate-400 tracking-widest uppercase mb-4">Upcoming Visits</span>
+                        <span className="text-[10px] font-extrabold text-slate-400 tracking-widest uppercase mb-4">Confirmed Visits</span>
                         <div className="flex items-baseline gap-2">
                             <span className="text-[2.5rem] font-black text-blue-600 leading-none">{appointments.length < 10 ? `0${appointments.length}` : appointments.length}</span>
                             <span className="text-[15px] font-medium text-slate-500">scheduled</span>
                         </div>
                     </div>
 
-                    {/* Stat 2 */}
                     <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-slate-100 flex flex-col justify-center min-h-[140px] hover:-translate-y-1 hover:shadow-md transition-all cursor-default">
                         <span className="text-[10px] font-extrabold text-slate-400 tracking-widest uppercase mb-4">Unread Results</span>
                         <div className="flex items-baseline gap-2">
@@ -407,7 +438,6 @@ export default function AppointmentsPage() {
                         </div>
                     </div>
 
-                    {/* Stat 3 */}
                     <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-slate-100 flex flex-col justify-center min-h-[140px] hover:-translate-y-1 hover:shadow-md transition-all cursor-pointer group">
                         <span className="text-[10px] font-extrabold text-slate-400 tracking-widest uppercase mb-4">Care Team</span>
                         <div className="flex items-center pt-2">
