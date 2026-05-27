@@ -36,4 +36,11 @@ export const recordsApi = {
         });
         return response.data;
     },
+
+    getPatientRecordsByDoctor: async (patientId: string, page = 1): Promise<PaginatedResponse<RecordItem>> => {
+        const response = await apiClient.get<PaginatedResponse<RecordItem>>(`/records/patient/${patientId}/`, {
+            params: { page },
+        });
+        return response.data;
+    },
 };

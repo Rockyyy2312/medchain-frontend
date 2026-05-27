@@ -15,6 +15,7 @@ export interface AccessRequestModel {
     status: string;
     created_at: string;
     doctor_details: BriefUserDetails;
+    patient_details?: BriefUserDetails;
 }
 
 export interface AccessGrantModel {
@@ -23,6 +24,7 @@ export interface AccessGrantModel {
     doctor: string;
     created_at: string;
     doctor_details: BriefUserDetails;
+    patient_details?: BriefUserDetails;
 }
 
 export const accessApi = {
@@ -40,6 +42,14 @@ export const accessApi = {
     },
     getGrants: async (): Promise<AccessGrantModel[]> => {
         const response = await apiClient.get<any>('/share/access/grants/');
+        return Array.isArray(response.data) ? response.data : response.data.results || [];
+    },
+    createRequest: async (params: { patient_email: string; reason?: string }) => {
+        const response = await apiClient.post('/share/access/requests/', params);
+        return response.data;
+    },
+    getGrantedRecords: async (patientId: string): Promise<any[]> => {
+        const response = await apiClient.get(`/share/access/grants/${patientId}/records/`);
         return Array.isArray(response.data) ? response.data : response.data.results || [];
     },
     revokeGrant: async (id: string) => {
