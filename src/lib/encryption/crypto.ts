@@ -38,7 +38,7 @@ export class CryptoUtil {
         const decryptedContent = await window.crypto.subtle.decrypt(
             {
                 name: "AES-GCM",
-                iv,
+                iv: iv as BufferSource,
             },
             key,
             encryptedBuffer
