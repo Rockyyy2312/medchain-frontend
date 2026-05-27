@@ -47,17 +47,24 @@ export default function AuthPage() {
                 const res = await authApi.login({ email, password });
                 role = res.role === 'DOCTOR' ? 'doctor' : 'patient';
             } else {
+                const nameParts = name.trim().split(' ');
+                const firstName = nameParts[0] || '';
+                const lastName = nameParts.slice(1).join(' ') || '';
                 await authApi.register({
                     email,
                     password,
                     role: selectedRole === 'doctor' ? 'DOCTOR' : 'PATIENT',
-                });
+                    first_name: firstName,
+                    last_name: lastName,
+                } as any);
                 const res = await authApi.login({ email, password });
                 role = res.role === 'DOCTOR' ? 'doctor' : 'patient';
             }
 
             // Set the auth cookie using the REAL role from the backend
             document.cookie = `auth_token=jwt-${role}; path=/; max-age=3600`;
+            localStorage.setItem('user_role', role);
+            useWalletStore.setState({ role: role as 'doctor' | 'patient' });
             router.push(`/dashboard/${role}`);
         } catch (err: unknown) {
             const axiosError = err as { response?: { data?: Record<string, unknown>; status?: number } };
