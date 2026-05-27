@@ -12,9 +12,13 @@ export function TopNavbar() {
         if (pathname.includes('/appointments')) return 'Appointments';
         if (pathname.includes('/access')) return 'Access Control';
         if (pathname.includes('/requests')) return 'Access Requests';
-        if (pathname.includes('/profile')) return 'Patient Profile';
+        if (pathname.includes('/profile')) return 'Profile';
         if (pathname.includes('/help')) return 'Help Center';
-        // Add others as needed or return nothing for dashboard
+        if (pathname.includes('/doctor/patients')) return 'Patients';
+        if (pathname.includes('/doctor/schedule')) return 'Schedule';
+        if (pathname.includes('/doctor/approvals')) return 'Approvals';
+        if (pathname.includes('/doctor/records')) return 'Medical Records';
+        if (pathname.includes('/doctor/analytics')) return 'Analytics';
         return '';
     };
 

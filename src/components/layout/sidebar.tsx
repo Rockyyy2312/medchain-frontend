@@ -14,7 +14,11 @@ import {
   HelpCircle,
   LogOut,
   ShieldHalf,
-  Share2
+  Share2,
+  Users,
+  CheckSquare,
+  BarChart,
+  Brain
 } from 'lucide-react';
 
 const patientSidebarItems = [
@@ -23,13 +27,18 @@ const patientSidebarItems = [
   { name: 'Appointments', href: '/appointments', icon: CalendarDays },
   { name: 'Access Control', href: '/access', icon: Shield },
   { name: 'Requests', href: '/requests', icon: ClipboardList },
+  { name: 'AI Assistant', href: '/ai-assistant', icon: Brain },
   { name: 'Profile', href: '/profile', icon: UserCircle },
 ];
 
 const doctorSidebarItems = [
   { name: 'Dashboard', href: '/dashboard/doctor', icon: LayoutDashboard },
-  { name: 'Shared with Me', href: '/records', icon: Share2 },
-  { name: 'Access Control', href: '/access', icon: Shield },
+  { name: 'Patients', href: '/doctor/patients', icon: Users },
+  { name: 'Schedule', href: '/doctor/schedule', icon: CalendarDays },
+  { name: 'Approvals', href: '/doctor/approvals', icon: CheckSquare },
+  { name: 'Medical Records', href: '/doctor/records', icon: Folder },
+  { name: 'Analytics', href: '/doctor/analytics', icon: BarChart },
+  { name: 'AI Assistant', href: '/ai-assistant', icon: Brain },
   { name: 'Profile', href: '/profile', icon: UserCircle },
 ];
 
@@ -40,9 +49,9 @@ const bottomItems = [
 export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
-  const { role } = useWalletStore();
 
-  const isDoctor = role === 'doctor';
+  // Use the route path to determine the layout context
+  const isDoctor = pathname.includes('/doctor');
   const sidebarItems = isDoctor ? doctorSidebarItems : patientSidebarItems;
 
   const handleSignOut = () => {
