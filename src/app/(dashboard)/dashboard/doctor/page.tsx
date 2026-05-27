@@ -1,217 +1,336 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { accessApi } from '@/lib/api/access';
+import { appointmentsApi, Appointment } from '@/lib/api/appointments';
+import { authApi } from '@/lib/api/auth';
 import {
-    Search, ShieldCheck, Users, FileText, Activity, Link2,
-    ArrowRight, ClipboardCheck, Eye, Clock, Stethoscope, Share2
+    Users, CalendarDays, ClipboardList, CheckCircle2,
+    Clock, AlertCircle, HeartPulse, FileText, ArrowRight, Activity, Loader2
 } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+
+function getPatientName(apt: Appointment) {
+    if (apt.patient_first_name || apt.patient_last_name) {
+        return `${apt.patient_first_name || ''} ${apt.patient_last_name || ''}`.trim();
+    }
+    return apt.patient_email || 'Anonymous Patient';
+}
+
+function isToday(dateStr: string) {
+    const today = new Date();
+    const d = new Date(dateStr);
+    return d.getFullYear() === today.getFullYear() &&
+        d.getMonth() === today.getMonth() &&
+        d.getDate() === today.getDate();
+}
 
 export default function DoctorDashboard() {
     const router = useRouter();
-    const [tokenInput, setTokenInput] = useState('');
+    const [doctorName, setDoctorName] = useState('Doctor');
+    const [stats, setStats] = useState({ patients: 0, appointments: 0, pendingRequests: 0 });
+    const [todayAppointments, setTodayAppointments] = useState<Appointment[]>([]);
+    const [pendingRequests, setPendingRequests] = useState<Appointment[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [isProcessing, setIsProcessing] = useState<string | null>(null);
 
-    const handleTokenLookup = () => {
-        if (tokenInput.trim()) {
-            router.push(`/share/${tokenInput.trim()}`);
+    useEffect(() => {
+        // Get doctor name — try localStorage first (set at login), fall back to /auth/me/
+        const storedFirst = localStorage.getItem('user_first_name') || '';
+        const storedLast = localStorage.getItem('user_last_name') || '';
+        if (storedFirst) {
+            setDoctorName(storedFirst);
+        } else {
+            authApi.getProfile().then(profile => {
+                const name = profile.first_name || profile.email || 'Doctor';
+                setDoctorName(name);
+                if (profile.first_name) localStorage.setItem('user_first_name', profile.first_name);
+                if (profile.last_name) localStorage.setItem('user_last_name', profile.last_name);
+            }).catch(() => {});
+        }
+
+        const loadData = async () => {
+            try {
+                const [grants, allApts] = await Promise.all([
+                    accessApi.getGrants(),
+                    appointmentsApi.getDoctorSchedule(),
+                ]);
+
+                const todayApts = allApts.filter(a => isToday(a.appointment_date) && a.status !== 'Cancelled');
+                const pending = allApts.filter(a => a.status?.toLowerCase() === 'pending');
+
+                setStats({
+                    patients: grants.length,
+                    appointments: todayApts.length,
+                    pendingRequests: pending.length,
+                });
+                setTodayAppointments(todayApts);
+                setPendingRequests(pending.slice(0, 3));
+            } catch (e) {
+                console.error('Failed to load dashboard data', e);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        loadData();
+    }, []);
+
+    const handleConfirm = async (id: string) => {
+        setIsProcessing(id);
+        try {
+            await appointmentsApi.confirmAppointment(id);
+            window.location.reload();
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setIsProcessing(null);
         }
     };
 
+    const todayStr = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+
     return (
-        <div className="min-h-full bg-slate-50/50 pb-16">
-            <div className="flex-1 space-y-10 p-8 max-w-[1100px] animate-in fade-in duration-500 mt-2">
+        <div className="min-h-full bg-[#F8FAFC] pb-16">
+            <div className="flex-1 space-y-8 p-8 max-w-[1200px] animate-in fade-in duration-500">
 
                 {/* Header */}
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div>
-                        <h2 className="text-[2rem] font-bold tracking-tight text-slate-900 flex items-center gap-2">
-                            Welcome, Dr. Provider 👋
-                        </h2>
-                        <p className="text-slate-500 font-semibold mt-2 text-[15px]">
-                            Access patient records securely using share tokens.
-                        </p>
-                    </div>
-                    <div className="flex items-center">
-                        <div className="flex items-center gap-2 px-5 py-2.5 bg-emerald-50/80 text-emerald-600 font-bold rounded-full shadow-sm text-sm border border-emerald-100/50 hover:bg-emerald-100 hover:shadow-md cursor-pointer transition-all active:scale-95">
-                            <Stethoscope className="w-4 h-4" />
-                            Provider Account
-                        </div>
-                    </div>
+                <div>
+                    <h2 className="text-[2.25rem] font-extrabold tracking-tight text-slate-900">
+                        Doctor Command Center
+                    </h2>
+                    <p className="text-slate-500 font-medium mt-1 text-[15px]">
+                        {isLoading
+                            ? 'Loading your schedule...'
+                            : `Welcome back, Dr. ${doctorName}. ${stats.appointments > 0
+                                ? `You have ${stats.appointments} appointment${stats.appointments !== 1 ? 's' : ''} today.`
+                                : 'No appointments scheduled for today.'}`
+                        }
+                    </p>
                 </div>
 
-                {/* Token Lookup Card — Primary CTA */}
-                <Card className="relative overflow-hidden border border-emerald-100 shadow-sm rounded-[2rem] bg-gradient-to-br from-emerald-50/40 to-white group hover:shadow-lg transition-all">
-                    <div className="absolute right-[-8%] top-[-15%] opacity-[0.04] pointer-events-none">
-                        <Link2 className="w-[280px] h-[280px] text-emerald-600" />
+                {/* Metrics Row */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {/* Total Patients (Granted Access) */}
+                    <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 flex items-center gap-5 hover:shadow-md transition-all cursor-default">
+                        <div className="w-14 h-14 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center shrink-0">
+                            <Users className="w-7 h-7" />
+                        </div>
+                        <div>
+                            <p className="text-[12px] font-bold tracking-wider text-slate-400 uppercase">Granted Access</p>
+                            <h3 className="text-3xl font-extrabold text-slate-900 mt-0.5">
+                                {isLoading ? '—' : stats.patients.toString().padStart(2, '0')}
+                            </h3>
+                            <p className="text-[13px] font-semibold text-emerald-600 mt-1 flex items-center gap-1">
+                                <Activity className="w-3.5 h-3.5" /> patients
+                            </p>
+                        </div>
                     </div>
-                    <CardContent className="p-8 space-y-6 relative z-10">
-                        <div className="flex items-center gap-4">
-                            <div className="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center">
-                                <Share2 className="w-6 h-6" />
-                            </div>
-                            <div>
-                                <h3 className="text-[1.35rem] font-bold text-slate-900">Access Shared Records</h3>
-                                <p className="text-slate-500 font-medium text-[14px] mt-1">
-                                    Enter a patient&apos;s share token to view their medical records securely.
+
+                    {/* Today's Appointments */}
+                    <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 flex items-center gap-5 hover:shadow-md transition-all cursor-default">
+                        <div className="w-14 h-14 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center shrink-0">
+                            <CalendarDays className="w-7 h-7" />
+                        </div>
+                        <div>
+                            <p className="text-[12px] font-bold tracking-wider text-slate-400 uppercase">Today</p>
+                            <h3 className="text-3xl font-extrabold text-slate-900 mt-0.5">
+                                {isLoading ? '—' : stats.appointments.toString().padStart(2, '0')}
+                            </h3>
+                            <p className="text-[13px] font-medium text-slate-500 mt-1">
+                                {todayAppointments.length > 0
+                                    ? `Next: ${todayAppointments[0].appointment_time.slice(0, 5)}`
+                                    : 'No visits today'}
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* Pending Requests */}
+                    <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 flex items-center gap-5 hover:shadow-md transition-all cursor-default">
+                        <div className="w-14 h-14 bg-orange-50 text-orange-600 rounded-2xl flex items-center justify-center shrink-0">
+                            <ClipboardList className="w-7 h-7" />
+                        </div>
+                        <div>
+                            <p className="text-[12px] font-bold tracking-wider text-slate-400 uppercase">Pending Requests</p>
+                            <h3 className="text-3xl font-extrabold text-slate-900 mt-0.5">
+                                {isLoading ? '—' : stats.pendingRequests.toString().padStart(2, '0')}
+                            </h3>
+                            {stats.pendingRequests > 0 && (
+                                <p className="text-[13px] font-bold text-orange-500 mt-1 flex items-center gap-1">
+                                    <AlertCircle className="w-3.5 h-3.5" /> awaiting review
                                 </p>
-                            </div>
+                            )}
                         </div>
+                    </div>
+                </div>
 
-                        <div className="flex gap-3">
-                            <div className="relative flex-1">
-                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                                <input
-                                    type="text"
-                                    placeholder="Paste share token here (e.g., aBcD3f...xYz)"
-                                    value={tokenInput}
-                                    onChange={(e) => setTokenInput(e.target.value)}
-                                    onKeyDown={(e) => e.key === 'Enter' && handleTokenLookup()}
-                                    className="w-full bg-white border border-slate-200 rounded-2xl pl-12 pr-6 py-4 text-[15px] font-medium text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-300 transition-all outline-none"
-                                />
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    {/* Left Column: Today's Schedule */}
+                    <div className="lg:col-span-2 space-y-6">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-4">
+                                <h3 className="text-2xl font-bold text-slate-900">Today's Schedule</h3>
+                                <span className="px-3 py-1 bg-emerald-100 text-emerald-700 text-xs font-bold rounded-full">
+                                    {todayStr}
+                                </span>
                             </div>
-                            <Button
-                                onClick={handleTokenLookup}
-                                disabled={!tokenInput.trim()}
-                                className="px-8 py-4 h-auto bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold rounded-2xl shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                            <button
+                                onClick={() => router.push('/doctor/schedule')}
+                                className="text-sm font-bold text-emerald-600 hover:text-emerald-700 transition-colors flex items-center gap-1"
                             >
-                                <Eye className="w-5 h-5 mr-2" />
-                                Access Records
-                            </Button>
+                                View Full Calendar <ArrowRight className="w-4 h-4" />
+                            </button>
                         </div>
 
-                        <p className="text-[12px] font-medium text-slate-400 flex items-center gap-1.5">
-                            <ShieldCheck className="w-3.5 h-3.5" />
-                            Tokens expire after 1 hour. All access is logged on the blockchain.
-                        </p>
-                    </CardContent>
-                </Card>
-
-                {/* Stats Row */}
-                <div className="grid gap-6 md:grid-cols-3">
-                    <Card className="border-0 shadow-sm rounded-[1.5rem] bg-slate-50 hover:bg-slate-100 hover:shadow-md hover:-translate-y-1 transition-all cursor-pointer flex items-center group">
-                        <CardContent className="p-6 flex items-center justify-center gap-5 w-full">
-                            <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-sm shrink-0 border border-slate-100 group-hover:border-emerald-200 transition-colors">
-                                <Users className="w-5 h-5 text-emerald-600" />
-                            </div>
-                            <div className="flex flex-col">
-                                <p className="text-[11px] font-extrabold text-slate-500 tracking-widest mb-1">PATIENTS SHARED</p>
-                                <h4 className="text-[1.75rem] font-extrabold text-slate-900 leading-none">12</h4>
-                            </div>
-                        </CardContent>
-                    </Card>
-                    <Card className="border-0 shadow-sm rounded-[1.5rem] bg-slate-50 hover:bg-slate-100 hover:shadow-md hover:-translate-y-1 transition-all cursor-pointer flex items-center group">
-                        <CardContent className="p-6 flex items-center justify-center gap-5 w-full">
-                            <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-sm shrink-0 border border-slate-100 group-hover:border-emerald-200 transition-colors">
-                                <Eye className="w-5 h-5 text-emerald-600" />
-                            </div>
-                            <div className="flex flex-col">
-                                <p className="text-[11px] font-extrabold text-slate-500 tracking-widest mb-1">TOKEN LOOKUPS TODAY</p>
-                                <h4 className="text-[1.75rem] font-extrabold text-slate-900 leading-none">05</h4>
-                            </div>
-                        </CardContent>
-                    </Card>
-                    <Card className="border-0 shadow-sm rounded-[1.5rem] bg-slate-50 hover:bg-slate-100 hover:shadow-md hover:-translate-y-1 transition-all cursor-pointer flex items-center group">
-                        <CardContent className="p-6 flex items-center justify-center gap-5 w-full">
-                            <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-sm shrink-0 border border-slate-100 group-hover:border-emerald-200 transition-colors">
-                                <FileText className="w-5 h-5 text-emerald-600" />
-                            </div>
-                            <div className="flex flex-col">
-                                <p className="text-[11px] font-extrabold text-slate-500 tracking-widest mb-1">RECORDS ACCESSED</p>
-                                <h4 className="text-[1.75rem] font-extrabold text-slate-900 leading-none">38</h4>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </div>
-
-                {/* Recent Shared Records */}
-                <div className="space-y-5">
-                    <div className="flex items-center justify-between">
-                        <h3 className="text-xl font-bold text-slate-900">Recently Accessed Records</h3>
-                        <span className="text-[13px] font-bold text-emerald-600 cursor-pointer hover:text-emerald-800 active:scale-95 transition-all">View all</span>
-                    </div>
-
-                    <div className="space-y-4">
-                        {/* Record 1 */}
-                        <Card className="border border-slate-100/50 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] hover:shadow-md hover:-translate-y-0.5 transition-all rounded-[1.5rem] bg-white cursor-pointer group">
-                            <CardContent className="p-5 flex items-center justify-between">
-                                <div className="flex items-center gap-4">
-                                    <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center shrink-0">
-                                        <FileText className="w-5 h-5" />
-                                    </div>
-                                    <div>
-                                        <h4 className="text-[15px] font-bold text-slate-900 group-hover:text-emerald-600 transition-colors">Annual Physical Report</h4>
-                                        <p className="text-[13px] font-medium text-slate-500 mt-0.5">General Health • Dr. Williams • Oct 15, 2023</p>
-                                    </div>
+                        <div className="space-y-4">
+                            {isLoading ? (
+                                <div className="bg-white rounded-3xl p-8 border border-slate-100 text-center shadow-sm">
+                                    <Loader2 className="w-8 h-8 animate-spin text-emerald-600 mx-auto mb-3" />
+                                    <p className="text-slate-500 font-bold">Loading schedule...</p>
                                 </div>
-                                <div className="flex items-center gap-4 shrink-0">
-                                    <span className="px-3 py-1.5 bg-emerald-50 text-emerald-600 text-[11px] font-bold rounded-full">CONFIRMED</span>
-                                    <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-emerald-600 group-hover:translate-x-1 transition-all" />
+                            ) : todayAppointments.length === 0 ? (
+                                <div className="bg-white rounded-3xl p-8 border border-slate-100 text-center text-slate-500 font-bold shadow-sm">
+                                    <CalendarDays className="w-10 h-10 text-slate-300 mx-auto mb-3" />
+                                    No appointments scheduled for today.
                                 </div>
-                            </CardContent>
-                        </Card>
+                            ) : todayAppointments.map((apt) => {
+                                const [hour, minute] = apt.appointment_time.split(':');
+                                const h = parseInt(hour, 10);
+                                const ampm = h >= 12 ? 'PM' : 'AM';
+                                const formattedHour = h % 12 || 12;
+                                const pName = getPatientName(apt);
+                                const isPending = apt.status?.toLowerCase() === 'pending';
+                                const isCancelled = apt.status?.toLowerCase() === 'cancelled';
 
-                        {/* Record 2 */}
-                        <Card className="border border-slate-100/50 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] hover:shadow-md hover:-translate-y-0.5 transition-all rounded-[1.5rem] bg-white cursor-pointer group">
-                            <CardContent className="p-5 flex items-center justify-between">
-                                <div className="flex items-center gap-4">
-                                    <div className="w-12 h-12 bg-purple-50 text-purple-600 rounded-full flex items-center justify-center shrink-0">
-                                        <Activity className="w-5 h-5" />
+                                return (
+                                    <div key={apt.id} className="bg-white rounded-3xl p-5 shadow-sm border border-slate-100 flex items-center justify-between group hover:shadow-md transition-all relative overflow-hidden">
+                                        <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${isPending ? 'bg-orange-500' : isCancelled ? 'bg-red-500' : 'bg-emerald-600'}`} />
+                                        <div className="flex items-center gap-6 pl-4">
+                                            <div className="text-center w-16">
+                                                <p className={`text-lg font-bold ${isPending ? 'text-orange-600' : isCancelled ? 'text-red-600' : 'text-emerald-600'}`}>
+                                                    {formattedHour}:{minute}
+                                                </p>
+                                                <p className="text-xs font-medium text-slate-400 uppercase">{ampm}</p>
+                                            </div>
+                                            <div className="w-12 h-12 rounded-full border-2 border-white shadow-sm overflow-hidden bg-gradient-to-tr from-emerald-500 to-teal-600 text-white flex items-center justify-center font-bold text-sm uppercase">
+                                                {pName[0]}
+                                            </div>
+                                            <div>
+                                                <h4 className="font-bold text-slate-900 text-lg">{pName}</h4>
+                                                <p className="text-sm text-slate-500 mt-0.5">{apt.specialty || 'General Consultation'}{apt.reason ? ` • ${apt.reason}` : ''}</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-4">
+                                            <span className={`px-4 py-1.5 text-xs font-bold rounded-full shadow-sm ${
+                                                isPending
+                                                    ? 'bg-orange-50 text-orange-600'
+                                                    : isCancelled
+                                                        ? 'bg-red-50 text-red-600'
+                                                        : 'bg-emerald-600 text-white'
+                                            }`}>
+                                                {apt.status}
+                                            </span>
+                                            {apt.patient_id && (
+                                                <button
+                                                    onClick={() => router.push(`/doctor/records?patientId=${apt.patient_id}&patientName=${encodeURIComponent(pName)}`)}
+                                                    className="opacity-0 group-hover:opacity-100 transition-opacity text-[11px] font-bold text-emerald-600 hover:text-emerald-800"
+                                                >
+                                                    Records
+                                                </button>
+                                            )}
+                                        </div>
                                     </div>
-                                    <div>
-                                        <h4 className="text-[15px] font-bold text-slate-900 group-hover:text-emerald-600 transition-colors">Chest X-Ray Results</h4>
-                                        <p className="text-[13px] font-medium text-slate-500 mt-0.5">Radiology • Dr. Patel • Nov 02, 2023</p>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-4 shrink-0">
-                                    <span className="px-3 py-1.5 bg-yellow-50 text-yellow-600 text-[11px] font-bold rounded-full">PENDING</span>
-                                    <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-emerald-600 group-hover:translate-x-1 transition-all" />
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        {/* Record 3 */}
-                        <Card className="border border-slate-100/50 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] hover:shadow-md hover:-translate-y-0.5 transition-all rounded-[1.5rem] bg-white cursor-pointer group">
-                            <CardContent className="p-5 flex items-center justify-between">
-                                <div className="flex items-center gap-4">
-                                    <div className="w-12 h-12 bg-orange-50 text-orange-600 rounded-full flex items-center justify-center shrink-0">
-                                        <ClipboardCheck className="w-5 h-5" />
-                                    </div>
-                                    <div>
-                                        <h4 className="text-[15px] font-bold text-slate-900 group-hover:text-emerald-600 transition-colors">Blood Panel Results</h4>
-                                        <p className="text-[13px] font-medium text-slate-500 mt-0.5">Laboratory • Dr. Lee • Sep 28, 2023</p>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-4 shrink-0">
-                                    <span className="px-3 py-1.5 bg-emerald-50 text-emerald-600 text-[11px] font-bold rounded-full">CONFIRMED</span>
-                                    <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-emerald-600 group-hover:translate-x-1 transition-all" />
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </div>
-                </div>
-
-                {/* Info Banner */}
-                <div className="bg-emerald-600 rounded-[2rem] p-8 text-white flex flex-col md:flex-row items-center justify-between shadow-lg shadow-emerald-600/20">
-                    <div className="space-y-3">
-                        <div className="flex items-center gap-2 text-[11px] font-extrabold tracking-wider text-emerald-200">
-                            <ShieldCheck className="w-4 h-4" /> SECURE ACCESS
+                                );
+                            })}
                         </div>
-                        <h3 className="text-[1.75rem] font-bold">All Record Access is Audited</h3>
-                        <p className="text-[14px] font-medium text-emerald-100 max-w-xl">
-                            Every token lookup and record view is cryptographically signed and timestamped on the MedChain blockchain for complete transparency.
-                        </p>
                     </div>
-                    <div className="mt-6 md:mt-0 flex items-center gap-8 bg-emerald-500/30 rounded-3xl px-8 py-5 border border-emerald-400/30">
-                        <div className="flex flex-col items-center">
-                            <span className="text-[10px] font-extrabold text-emerald-200 tracking-wider">ACTIVE TOKENS</span>
-                            <span className="text-[2.25rem] leading-none font-black mt-1">07</span>
+
+                    {/* Right Column: Pending Requests */}
+                    <div className="space-y-6">
+                        <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-slate-100">
+                            <div className="flex items-center justify-between mb-6">
+                                <h3 className="text-lg font-bold text-slate-900">Pending Requests</h3>
+                                {stats.pendingRequests > 0 && (
+                                    <span className="px-2 py-0.5 bg-orange-600 text-white text-[10px] font-bold rounded-md">
+                                        {stats.pendingRequests}
+                                    </span>
+                                )}
+                            </div>
+
+                            <div className="space-y-4">
+                                {isLoading ? (
+                                    <div className="text-center py-6">
+                                        <Loader2 className="w-6 h-6 animate-spin text-emerald-600 mx-auto" />
+                                    </div>
+                                ) : pendingRequests.length === 0 ? (
+                                    <div className="text-center py-6 text-slate-400 text-xs font-bold">
+                                        <CheckCircle2 className="w-8 h-8 mx-auto mb-2 text-emerald-300" />
+                                        All caught up!
+                                    </div>
+                                ) : pendingRequests.map(apt => {
+                                    const pName = getPatientName(apt);
+                                    return (
+                                        <div key={apt.id} className="bg-slate-50 border border-slate-100 rounded-2xl p-4">
+                                            <div className="flex gap-4">
+                                                <div className="mt-1">
+                                                    <CalendarDays className="w-5 h-5 text-orange-500" />
+                                                </div>
+                                                <div className="flex-1">
+                                                    <h4 className="text-[13px] font-bold text-slate-900">{pName}</h4>
+                                                    <p className="text-[11px] text-slate-500 mt-0.5">
+                                                        {new Date(apt.appointment_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} at {apt.appointment_time.slice(0, 5)} • {apt.specialty || 'General'}
+                                                    </p>
+                                                    <div className="flex gap-2 mt-3">
+                                                        <button
+                                                            disabled={isProcessing === apt.id}
+                                                            onClick={() => handleConfirm(apt.id)}
+                                                            className="bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-[11px] font-bold py-1.5 px-4 rounded-full transition-colors flex items-center gap-1"
+                                                        >
+                                                            {isProcessing === apt.id ? <Loader2 className="w-3 h-3 animate-spin" /> : null}
+                                                            Confirm
+                                                        </button>
+                                                        <button
+                                                            onClick={() => router.push('/doctor/approvals')}
+                                                            className="bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 text-[11px] font-bold py-1.5 px-4 rounded-full transition-colors"
+                                                        >
+                                                            Review
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+
+                            <div className="mt-6 text-center">
+                                <button
+                                    onClick={() => router.push('/doctor/approvals')}
+                                    className="text-xs font-bold text-emerald-600 hover:text-emerald-800 transition-colors"
+                                >
+                                    View all pending requests
+                                </button>
+                            </div>
                         </div>
-                        <div className="w-px h-12 bg-emerald-400/50"></div>
-                        <div className="flex flex-col items-center">
-                            <span className="text-[10px] font-extrabold text-emerald-200 tracking-wider">EXPIRED (24H)</span>
-                            <span className="text-[2.25rem] leading-none font-black mt-1">03</span>
+
+                        {/* Quick Nav Card */}
+                        <div className="bg-gradient-to-br from-emerald-600 to-teal-700 rounded-[2rem] p-6 text-white shadow-md">
+                            <h3 className="text-xs font-extrabold tracking-wider uppercase mb-4 text-emerald-100">Quick Navigation</h3>
+                            <div className="space-y-2">
+                                {[
+                                    { label: 'Full Schedule', href: '/doctor/schedule' },
+                                    { label: 'Patient Directory', href: '/doctor/patients' },
+                                    { label: 'Approvals', href: '/doctor/approvals' },
+                                ].map(item => (
+                                    <button
+                                        key={item.href}
+                                        onClick={() => router.push(item.href)}
+                                        className="w-full text-left py-2.5 px-4 bg-white/10 hover:bg-white/20 rounded-xl text-sm font-bold text-white transition-colors flex items-center justify-between"
+                                    >
+                                        {item.label}
+                                        <ArrowRight className="w-4 h-4 opacity-70" />
+                                    </button>
+                                ))}
+                            </div>
                         </div>
                     </div>
                 </div>
