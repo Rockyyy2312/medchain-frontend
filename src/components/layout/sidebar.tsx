@@ -38,7 +38,6 @@ const doctorSidebarItems = [
   { name: 'Approvals', href: '/doctor/approvals', icon: CheckSquare },
   { name: 'Medical Records', href: '/doctor/records', icon: Folder },
   { name: 'Analytics', href: '/doctor/analytics', icon: BarChart },
-  { name: 'AI Assistant', href: '/ai-assistant', icon: Brain },
   { name: 'Profile', href: '/profile', icon: UserCircle },
 ];
 
