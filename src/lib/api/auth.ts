@@ -19,6 +19,8 @@ export interface RegisterRequest {
     email: string;
     password: string;
     role?: 'PATIENT' | 'DOCTOR';
+    first_name?: string;
+    last_name?: string;
 }
 
 export interface RegisterResponse {
@@ -26,18 +28,33 @@ export interface RegisterResponse {
     user_id: string;
 }
 
+export interface GoogleLoginRequest {
+    credential: string;
+    role?: 'PATIENT' | 'DOCTOR';
+}
+
+const storeAuthTokens = (data: LoginResponse) => {
+    if (typeof window !== 'undefined') {
+        localStorage.setItem('access_token', data.access);
+        localStorage.setItem('refresh_token', data.refresh);
+        localStorage.setItem('user_role', data.role);
+        localStorage.setItem('user_email', data.email);
+        if (data.first_name) localStorage.setItem('user_first_name', data.first_name);
+        if (data.last_name) localStorage.setItem('user_last_name', data.last_name);
+        if (data.user_id) localStorage.setItem('user_id', String(data.user_id));
+    }
+};
+
 export const authApi = {
     login: async (data: LoginRequest): Promise<LoginResponse> => {
         const response = await apiClient.post<LoginResponse>('/auth/login/', data);
-        if (typeof window !== 'undefined') {
-            localStorage.setItem('access_token', response.data.access);
-            localStorage.setItem('refresh_token', response.data.refresh);
-            localStorage.setItem('user_role', response.data.role);
-            localStorage.setItem('user_email', response.data.email);
-            if (response.data.first_name) localStorage.setItem('user_first_name', response.data.first_name);
-            if (response.data.last_name) localStorage.setItem('user_last_name', response.data.last_name);
-            if (response.data.user_id) localStorage.setItem('user_id', String(response.data.user_id));
-        }
+        storeAuthTokens(response.data);
+        return response.data;
+    },
+
+    googleLogin: async (data: GoogleLoginRequest): Promise<LoginResponse> => {
+        const response = await apiClient.post<LoginResponse>('/auth/google/', data);
+        storeAuthTokens(response.data);
         return response.data;
     },
 

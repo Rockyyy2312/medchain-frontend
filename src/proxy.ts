@@ -30,7 +30,8 @@ export function proxy(request: NextRequest) {
 
     // If already logged in and trying to access login page, redirect to dashboard
     if (isPublicOnlyRoute && authToken) {
-        return NextResponse.redirect(new URL('/dashboard/patient', request.url));
+        const role = authToken.includes('doctor') ? 'doctor' : 'patient';
+        return NextResponse.redirect(new URL(`/dashboard/${role}`, request.url));
     }
 
     return NextResponse.next();
