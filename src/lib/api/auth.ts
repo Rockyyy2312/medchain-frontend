@@ -30,6 +30,7 @@ export interface RegisterResponse {
 
 export interface GoogleLoginRequest {
     credential: string;
+    flow: 'login' | 'register';
     role?: 'PATIENT' | 'DOCTOR';
 }
 
@@ -52,9 +53,11 @@ export const authApi = {
         return response.data;
     },
 
-    googleLogin: async (data: GoogleLoginRequest): Promise<LoginResponse> => {
-        const response = await apiClient.post<LoginResponse>('/auth/google/', data);
-        storeAuthTokens(response.data);
+    googleLogin: async (data: GoogleLoginRequest): Promise<any> => {
+        const response = await apiClient.post<any>('/auth/google/', data);
+        if (data.flow === 'login') {
+            storeAuthTokens(response.data);
+        }
         return response.data;
     },
 

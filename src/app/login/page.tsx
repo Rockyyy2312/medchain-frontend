@@ -17,9 +17,16 @@ export default function AuthPage() {
     const [isLogin, setIsLogin] = useState(true);
     const [selectedRole, setSelectedRole] = useState<'patient' | 'doctor'>('patient');
     const [error, setError] = useState<string | null>(null);
+    const [successMessage, setSuccessMessage] = useState<string | null>(null);
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+
+    const toggleAuthMode = () => {
+        setIsLogin(!isLogin);
+        setError(null);
+        setSuccessMessage(null);
+    };
 
     const navigateToDashboard = (role: string) => {
         const dashboardRole = role === 'DOCTOR' ? 'doctor' : 'patient';
@@ -32,6 +39,7 @@ export default function AuthPage() {
         e.preventDefault();
         setIsLoading(true);
         setError(null);
+        setSuccessMessage(null);
 
         try {
             if (isLogin) {
@@ -50,9 +58,11 @@ export default function AuthPage() {
                     first_name: firstName,
                     last_name: lastName,
                 });
-                // Auto-login after registration
-                const res = await authApi.login({ email, password });
-                navigateToDashboard(res.role);
+                
+                // Do NOT auto-login. Toggle to login mode and show success message.
+                setIsLogin(true);
+                setSuccessMessage("Registration successful! Please sign in with your credentials.");
+                setIsLoading(false);
             }
         } catch (err: unknown) {
             const axiosError = err as { response?: { data?: Record<string, unknown>; status?: number } };
@@ -60,6 +70,13 @@ export default function AuthPage() {
                 const data = axiosError.response.data;
                 const msg = data.detail || data.error || data.email || data.password || JSON.stringify(data);
                 setError(String(msg));
+                
+                // Switch mode if necessary:
+                if (isLogin && String(msg).includes("register first")) {
+                    setIsLogin(false);
+                } else if (!isLogin && String(msg).includes("already exists")) {
+                    setIsLogin(true);
+                }
             } else {
                 setError('Connection failed. Is the backend server running on port 8000?');
             }
@@ -75,26 +92,44 @@ export default function AuthPage() {
 
         setIsLoading(true);
         setError(null);
+        setSuccessMessage(null);
 
         try {
             const res = await authApi.googleLogin({
                 credential: credentialResponse.credential,
+                flow: isLogin ? 'login' : 'register',
                 // Only send role when registering (new user sign-up via Google)
                 ...((!isLogin) && { role: selectedRole === 'doctor' ? 'DOCTOR' : 'PATIENT' }),
             });
-            navigateToDashboard(res.role);
+            
+            if (isLogin) {
+                navigateToDashboard(res.role);
+            } else {
+                // If it was register flow, it created the user.
+                // Switch to login and prompt them to login.
+                setIsLogin(true);
+                setSuccessMessage("Google registration successful! Please sign in with Google to continue.");
+                setIsLoading(false);
+            }
         } catch (err: unknown) {
             const axiosError = err as { response?: { data?: Record<string, unknown>; status?: number } };
             if (axiosError.response?.data) {
                 const data = axiosError.response.data;
                 const msg = data.detail || data.error || JSON.stringify(data);
                 setError(String(msg));
+                
+                if (isLogin && String(msg).includes("register first")) {
+                    setIsLogin(false);
+                } else if (!isLogin && String(msg).includes("already exists")) {
+                    setIsLogin(true);
+                }
             } else {
                 setError('Google sign-in failed. Please try again.');
             }
             setIsLoading(false);
         }
     };
+
 
     return (
         <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
@@ -241,6 +276,13 @@ export default function AuthPage() {
                                             {error}
                                         </div>
                                     )}
+
+                                    {successMessage && (
+                                        <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-100 rounded-xl text-[13px] font-medium text-green-600">
+                                            <ShieldCheck className="w-4 h-4 shrink-0" />
+                                            {successMessage}
+                                        </div>
+                                    )}
                                 </form>
 
                                 <div className="relative my-6 text-center">
@@ -269,7 +311,7 @@ export default function AuthPage() {
                                 <p className="text-sm text-muted-foreground">
                                     {isLogin ? "Don't have an account? " : "Already have an account? "}
                                     <button
-                                        onClick={() => { setIsLogin(!isLogin); setError(null); }}
+                                        onClick={toggleAuthMode}
                                         className="font-semibold text-primary hover:text-primary/80 hover:underline transition-colors border-none bg-transparent"
                                     >
                                         {isLogin ? "Register now" : "Log in"}
