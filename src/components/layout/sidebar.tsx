@@ -26,7 +26,6 @@ const patientSidebarItems = [
   { name: 'Appointments', href: '/appointments', icon: CalendarDays },
   { name: 'Access Control', href: '/access', icon: Shield },
   { name: 'Requests', href: '/requests', icon: ClipboardList },
-  { name: 'AI Assistant', href: '/ai-assistant', icon: Brain },
   { name: 'Profile', href: '/profile', icon: UserCircle },
 ];
 

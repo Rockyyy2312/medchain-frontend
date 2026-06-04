@@ -1,5 +1,6 @@
 import { Sidebar } from "@/components/layout/sidebar";
 import { TopNavbar } from "@/components/layout/top-navbar";
+import { AIAssistantWidget } from "@/components/layout/ai-assistant-widget";
 
 export default function DashboardLayout({
     children,
@@ -11,9 +12,10 @@ export default function DashboardLayout({
             <Sidebar />
             <div className="flex flex-col flex-1 w-full overflow-hidden">
                 <TopNavbar />
-                <main className="flex-1 overflow-y-auto w-full">
+                <main className="flex-1 overflow-y-auto w-full relative">
                     {children}
                 </main>
+                <AIAssistantWidget />
             </div>
         </div>
     );
