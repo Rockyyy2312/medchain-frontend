@@ -47,6 +47,19 @@ export interface RAGHealthResponse {
     embedding_model: string;
 }
 
+export interface RAGCompareRequest {
+    patient_id_1: string;
+    patient_id_2: string;
+    aspects?: string[];
+}
+
+export interface RAGCompareResponse {
+    comparison: string;
+    patient_1_summary: string;
+    patient_2_summary: string;
+    query: string;
+}
+
 
 const RAG_BASE_URL = process.env.NEXT_PUBLIC_RAG_URL || 'http://localhost:8001/api/v1';
 
@@ -104,6 +117,22 @@ export const ragApi = {
         if (!res.ok) {
             const err = await res.json().catch(() => ({ detail: res.statusText }));
             throw new Error(err.detail || 'Failed to fetch question bank');
+        }
+        return res.json();
+    },
+
+    compare: async (params: RAGCompareRequest): Promise<RAGCompareResponse> => {
+        const res = await fetch(`${RAG_BASE_URL}/compare`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                ...getAuthHeaders(),
+            },
+            body: JSON.stringify(params),
+        });
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({ detail: res.statusText }));
+            throw new Error(err.detail || 'Comparison query failed');
         }
         return res.json();
     },
